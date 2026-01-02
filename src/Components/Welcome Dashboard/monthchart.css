@@ -1,0 +1,55 @@
+.content-title-month{
+    font-size: 40px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 16px;
+  letter-spacing: 0.3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: linear-gradient(135deg, #fdfdfd, #f8f9fb);
+  padding: 12px 18px;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  position: relative;
+  overflow: hidden;
+}
+
+
+.monthdata{
+    width: 95%;
+    height: 400px;
+    background: #ffffff; /* clean card background */
+    border-radius: 12px; /* rounded corners */
+    padding: 16px; /* spacing inside */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* soft shadow */
+    border: none; /* remove harsh border */
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+
+/* Hover effect for interactivity */.monthdata:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+}
+
+/* Optional: add a title section for the graph */
+.monthdata-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #444;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+/* Optional: dark theme version */
+.dark-mode .monthdata {
+  background: #1e1e2f;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}

@@ -1,0 +1,636 @@
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+.no-reels {
+  display: flex;
+  justify-content: center; /* horizontal center */
+  align-items: center;     /* vertical center */
+  height: 100vh;           /* पूरे viewport height में center */
+}
+.no-reels p {
+  text-align: center;
+  font-size: 18px;
+  font-weight: 500;
+  color: gray;
+}
+
+
+/* --- scroll container: one full-screen reel per snap --- */
+.reels-page {
+  /* Use flexbox to center content horizontally */
+  display: block;
+  height: 100vh; /* viewport height */
+  width: 100%;
+  overflow-y: auto; /* vertical scroll */
+  overflow-x: hidden;
+  padding: 0; /* remove padding that adds whitespace */
+  margin: 0;
+  scroll-snap-type: y mandatory; /* snap like reels */
+  -webkit-overflow-scrolling: touch;
+  /* border: 2px solid red;x */
+  background: #000;
+}
+
+.left-toggle-div {
+  width: 300px;
+  height: 100vh; /* full height */
+  z-index: 99999;
+  /* border: 2px solid red; */
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  background-color: darkcyan;
+  display: flex;
+  color: white;
+  flex-direction: column;
+  transition: transform 0.3s ease;
+}
+
+
+/* Mobile hidden */
+.mobile-hidden {
+  transform: translateX(-100%);
+}
+/* Hide sidebar on mobile by default */
+.left-toggle-div.mobile-hidden {
+  transform: translateX(-100%);
+}
+
+/* Logo section */
+.logo-image-div {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  gap: 10px;
+}
+
+/* Menu headings */
+.all-toggle-headings {
+  display: flex;
+  flex-direction: column;
+  padding: 10px 20px;
+  gap: 15px;
+  flex: 1;
+}
+
+.toggle-headings-name {
+  padding: 10px;
+  cursor: pointer;
+  font-size: 18px;
+  /* color: black; */
+  transition: background 0.2s;
+}
+
+.toggle-headings-name:hover {
+  background-color: rgb(44, 44, 44);
+}
+
+/* Mobile media query */
+@media screen and (max-width: 768px) {
+  .left-toggle-div {
+    width: 250px;
+    height: 100vh;
+    bottom: 0;
+    left: 0;
+  }
+  .logo-image-div{
+    opacity: 0.0;
+  }
+}
+
+
+
+
+
+.upload-reel-btn {
+  position: fixed; /* stays at bottom-right always */
+  bottom: 20px;
+  right: 20px;
+  background: #ff004f; /* TikTok style pink/red */
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  font-size: 28px;
+  z-index: 99;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s ease-in-out;
+}
+/* hide scrollbars */
+.reels-page::-webkit-scrollbar {
+  display: none;
+}
+.reels-page {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* --- each reel fills the viewport and snaps cleanly --- */
+.reel-card {
+  position: relative;
+  width: 360px; /* Base width for desktops, adjustable */
+  max-width: 90%; /* Responsive max width for smaller screens */
+  height: 100vh;
+  margin: 0 auto;
+  background: #000;
+  overflow: hidden;
+  scroll-snap-align: start; /* snap at start */
+  scroll-snap-stop: always; /* prevent half snaps */
+}
+
+/* --- video covers the card --- */
+.reel-video {
+  position: absolute;
+  inset: 0; /* top/right/bottom/left: 0 */
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* --- overlay container --- */
+.reel-overlay {
+  position: absolute;
+  bottom: 30px;
+  left: 25px;
+  right: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  color: #fff;
+}
+
+/* Left side (Owner info + Title) */
+.reel-left {
+  max-width: 70%;
+  height: 70px;
+  /* border: 2px solid red; */
+}
+
+.reel-owner {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.reel-owner-img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 8px;
+}
+
+.reel-owner-name {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.reel-owner-location {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.reel-video-title {
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+/* Right side (likes, comments, shares stacked vertically) */
+.reel-right {
+  position: absolute;
+  bottom: 40px;
+  right: 5px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 30px;
+}
+
+.reel-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out;
+}
+
+.reel-action:hover {
+  transform: scale(1.2);
+}
+
+.reel-icon {
+  width: 48px;
+  height: 50px;
+  font-size: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  border-radius: 50%;
+}
+
+.reel-count {
+  margin-top: 4px;
+  font-size: 14px;
+  color: white;
+  font-weight: 500;
+}
+
+/* =============================
+   Comments Popup
+   ============================= */
+.reel-comments-popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.reel-comments-content {
+  background: #fff;
+  padding: 20px;
+  width: 90%; /* Responsive width for popup */
+  max-width: 400px; /* Max width for larger screens */
+  max-height: 70vh;
+  overflow-y: auto;
+  border-radius: 10px;
+  position: relative;
+}
+
+.reel-comments-close {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.reel-comment {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.reel-comment-img {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.reel-comment-text {
+  font-size: 13px;
+  color: #333;
+}
+
+.reel-comment-author {
+  font-weight: 600;
+  margin-right: 4px;
+  color: #111;
+}
+
+.reel-add-comment {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.reel-comment-input {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 20px;
+  font-size: 14px;
+  outline: none;
+}
+
+.reel-comment-btn {
+  background: #ff3040;
+  border: none;
+  color: white;
+  font-size: 14px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.reel-comment-btn:hover {
+  background: #e02635;
+}
+
+.reel-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+}
+
+.reel-progress-fill {
+  width: 0%;
+  height: 100%;
+  background: white;
+  transition: width 0.1s linear;
+}
+
+/* when i double click on screen it got liked */
+.double-tap-heart {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.3);
+  font-size: 120px;
+  color: #ff2d55;
+  opacity: 0;
+  animation: heart-burst 1s ease forwards;
+  pointer-events: none;
+}
+
+@keyframes heart-burst {
+  0% {
+    transform: translate(-50%, -50%) scale(0.3);
+    opacity: 0;
+  }
+  30% {
+    transform: translate(-50%, -50%) scale(1.2);
+    opacity: 1;
+  }
+  60% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.4);
+    opacity: 0;
+  }
+}
+
+/* css for reels upload button div ------------------------> */
+
+/* Floating Upload Button */
+.uploadReelFloatingBtn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  padding: 18px 22px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff6b6b, #ff4757);
+  color: #fff;
+  font-size: 24px;
+  font-weight: bold;
+  z-index: 9999;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0px 6px 15px rgba(0, 0, 0, 0.25);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.uploadReelFloatingBtn:hover {
+  transform: scale(1.15);
+  box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Overlay */
+.uploadReelOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 9998;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 15px;
+}
+
+/* Modal */
+.uploadReelModal {
+  background: #ffffff;
+  padding: 25px 20px;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 420px;
+  position: relative;
+  z-index: 9999;
+  box-shadow: 0px 8px 25px rgba(0, 0, 0, 0.25);
+  animation: slideUp 0.35s ease;
+}
+
+/* Close Button */
+.uploadReelCloseBtn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: transparent;
+  border: none;
+  font-size: 22px;
+  font-weight: bold;
+  color: #333;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.uploadReelCloseBtn:hover {
+  color: #ff4757;
+}
+
+/* Headings */
+.uploadReelModal h2 {
+  margin-bottom: 15px;
+  font-size: 20px;
+  font-weight: 600;
+  color: #222;
+  border-bottom: 2px solid #ff6b6b;
+  padding-bottom: 8px;
+}
+
+/* Form Elements */
+.uploadReelModal form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.uploadReelModal label {
+  font-weight: 500;
+  color: #444;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.uploadReelModal input[type="text"],
+.uploadReelModal input[type="file"] {
+  width: 100%;
+  padding: 10px;
+  border: 1.5px solid #ccc;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  transition: border 0.2s ease;
+}
+
+.uploadReelModal input[type="text"]:focus,
+.uploadReelModal input[type="file"]:focus {
+  border-color: #ff6b6b;
+}
+
+/* Submit Button */
+.uploadReelModal button[type="submit"] {
+  padding: 12px;
+  background: linear-gradient(135deg, #ff6b6b, #ff4757);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.uploadReelModal button[type="submit"]:hover {
+  transform: translateY(-2px);
+  box-shadow: 0px 5px 15px rgba(255, 71, 87, 0.4);
+}
+
+/* Message */
+.uploadReelModal p {
+  margin-top: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
+
+/* Animations */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .uploadReelModal {
+    max-width: 90%;
+    padding: 20px 15px;
+  }
+
+  .uploadReelModal h2 {
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .uploadReelModal {
+    max-width: 100%;
+    border-radius: 12px;
+  }
+
+  .uploadReelModal button[type="submit"] {
+    font-size: 14px;
+    padding: 10px;
+  }
+
+  .uploadReelFloatingBtn {
+    bottom: 15px;
+    right: 15px;
+    font-size: 20px;
+    padding: 14px 18px;
+  }
+}
+
+/* --- Media Queries for Responsiveness --- */
+
+@media (max-width: 480px) {
+  .reel-card {
+    width: 100%; /* Full width on small screens */
+    max-width: 100%; /* Ensure it doesn't exceed screen */
+  }
+
+  .reel-overlay {
+    left: 15px;
+    right: 15px;
+    bottom: 20px;
+  }
+
+  .reel-right {
+    bottom: 60px;
+    gap: 20px;
+  }
+
+  .reel-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 28px;
+  }
+
+  .reel-count {
+    font-size: 12px;
+  }
+
+  .reel-comments-content {
+    width: 95%;
+    max-width: 95%;
+    padding: 15px;
+  }
+}
+
+/* Medium screens (tablets) */
+@media (min-width: 481px) and (max-width: 768px) {
+  .reel-card {
+    width: 80%; /* Slightly narrower than full width */
+    max-width: 360px; /* Cap at a reasonable width */
+  }
+
+  .reel-overlay {
+    left: 20px;
+    right: 20px;
+  }
+
+  .reel-right {
+    gap: 25px;
+  }
+
+  .reel-icon {
+    width: 44px;
+    height: 44px;
+    font-size: 32px;
+  }
+}
+
+/* Large screens (laptops/desktops) */
+@media (min-width: 769px) {
+  .reel-card {
+    width: 360px; /* Fixed width for desktops */
+    max-width: 360px; /* Consistent with base design */
+  }
+}

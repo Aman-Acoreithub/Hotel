@@ -1,0 +1,948 @@
+/* Base styles */
+*{
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+
+/* Content (heading, subheading) center me hero image ke upar */
+.hero-content {
+  text-align: center;
+  z-index: 2;
+}
+
+.transparent-header,
+.white-header {
+  margin: 0;   /* reset margin */
+  padding: 0;  /* adjust if extra padding */
+}
+
+
+/* Search box image ke bottom me overlay karke center me aaye */
+.search-box {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 1200px;
+  background: white;
+  padding: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  z-index: 3;
+}
+
+/* Hero content (title, subtitle) styling */
+.hero-content h1 {
+  font-size: 48px;
+  margin-bottom: 10px;
+}
+
+.hero-content p {
+  font-size: 20px;
+  margin-bottom: 30px;
+}
+
+.search-form select {
+  padding: 8px 10px;
+  /* width: 180px; */
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.user-dropdown-container {
+  position: relative;
+  margin-top: -20px;
+}
+
+.user-dropdown {
+  position: absolute;
+  top: 40px;
+  right: 0;
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  min-width: 150px;
+  z-index: 10;
+}
+
+.user-dropdown ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.user-dropdown ul li {
+  padding: 10px 15px;
+  cursor: pointer;
+}
+
+.user-dropdown ul li:hover {
+  background-color: #f0f0f0;
+  /* color: darkcyan; */
+}
+
+.nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 100px;
+  position: relative;
+  z-index: 2;
+}
+
+.logo {
+  font-size: 100px;
+  font-weight: bold;
+  margin-top: -40px;
+  /* color: white; */
+}
+
+.btn-search {
+  padding: 12px 24px;
+  background-color: darkcyan;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  align-self: flex-end;
+}
+
+.search-form {
+  display: flex;
+  padding-left: 20px;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  flex-wrap: wrap; /* allow wrapping on small screens */
+}
+
+.user-panel {
+  position: fixed;
+  top: 0;
+  right: -100%;
+  width: 250px;
+  height: 100%;
+  background: white;
+  padding: 1.5rem;
+  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+  transition: right 0.3s ease;
+  z-index: 1000;
+}
+
+.user-panel.active {
+  right: 0;
+}
+
+.user-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: bold;
+  font-size: 18px;
+  margin-bottom: 1rem;
+}
+
+.btn-login {
+  margin-top: 1rem;
+  padding: 10px 20px;
+  background: lightgray;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.login-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 2000; /* Higher than user panel and mobile menu */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.login-form {
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 100%;
+  position: relative;
+}
+
+.login-form .close-btn {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+}
+/* .remember-me {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+} */
+
+.favourite {
+  margin-top: 1.5rem;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  color: black;
+  font-weight: 500;
+}
+
+.desktop-nav,
+.desktop-auth {
+  display: flex;
+}
+
+.nav-links {
+  list-style: none;
+  display: flex;
+  gap: 20px;
+}
+
+.nav-links a {
+  color: white;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.auth .btn,
+.btn {
+  /* padding:5px; */
+  margin-top: 10px;
+  background: darkcyan;
+  color: white;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px;
+}
+/* 
+.hero-content {
+  text-align: center;
+  padding-top: 150px;
+  max-width: 700px;
+  margin: 0 auto;
+} */
+
+.hero-content h1 {
+  font-size: 36px;
+
+  margin-bottom: 10px;
+}
+
+.hero-content p {
+  font-size: 18px;
+  margin-bottom: 30px;
+}
+
+.search-box {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  /* width: 200%; */
+  color: black;
+}
+
+.search-form {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+  gap: 15px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.search-form div {
+  /* margin-top: -50px; */
+  display: flex;
+  flex-direction: column;
+}
+/* .search-form select {
+  padding: 8px 10px;
+  width: 240px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+} */
+.search-form label {
+  font-size: 15px;
+  margin-bottom: 5px;
+  /* margin-left: -210px; */
+  /* color: #333 */
+  font-weight: 700;
+}
+
+.btn-search {
+  padding: 10px 20px;
+  background-color: #0ea5e9;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  align-self: center;
+}
+
+.hero-content {
+  position: relative;
+  padding-bottom: 120px;
+}
+
+.search-box {
+  margin-top: 50px;
+  position: absolute;
+  bottom: -200px;
+  left: 50%;
+  transform: translateX(-50%);
+  /* width: 120%; */
+  max-width: 1200px;
+  background: white;
+  padding: 30px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+}
+
+.dropdown {
+  position: relative;
+}
+
+.dropdown-menu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background-color: white;
+  border: 1px solid #ccc;
+  list-style: none;
+  /* padding: 0; */
+  margin: -10px;
+  z-index: 1000;
+  width: 200px;
+  min-width: 150px;
+}
+
+.dropdown-menu li {
+  border-bottom: 1px solid #eee;
+}
+
+.dropdown-menu li a {
+  display: block;
+  padding: 10px 15px;
+  text-decoration: none;
+  /* color: #333; */
+}
+
+.dropdown-menu li a:hover {
+  background-color: #f5f5f5;
+}
+
+.dropdown:hover .dropdown-menu {
+  display: block;
+}
+
+.btn-search {
+  background-color: darkcyan;
+  color: white;
+  padding: 0.5rem 1rem;
+  border: none;
+  cursor: pointer;
+}
+
+/* Mobile Menu Styles */
+.menu-toggle {
+  display: none;
+  margin-left: -10px;
+  flex-direction: column;
+  cursor: pointer;
+  /* border: 2px solid rgb(247, 181, 0) ; */
+  /* gap: 5px; */
+  z-index: 1001; /* Ensure it's above other elements */
+  position: relative; /* Ensure positioning context */
+}
+
+.menu-toggle span {
+  height: 3px;
+  width: 25px;
+  background: white; /* Ensure visibility */
+  display: block; /* Ensure spans are block-level */
+}
+
+/* Mobile Menu */
+.mobile-menu {
+  position: fixed;
+  top: 0;
+  left: -100%;
+  width: 250px;
+  height: 100%;
+  background-color: #fff;
+  transition: left 0.3s ease-in-out;
+  z-index: 1000;
+  padding-top: 20px;
+  box-shadow: 2px 0px 10px rgba(0, 0, 0, 0.2);
+}
+
+.mobile-menu.active {
+  left: 0;
+}
+
+.overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 999; /* Below mobile-menu but above other content */
+}
+
+.overlay.active {
+  display: block;
+}
+
+.mobile-menu .logo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+}
+
+.mobile-menu ul {
+  padding-left: 0;
+  list-style: none;
+}
+
+.mobile-menu ul li {
+  padding: 15px 20px;
+}
+
+.mobile-menu ul li a {
+  text-decoration: none;
+  /* color: #333; */
+  font-size: 16px;
+}
+
+/* Mobile Menu Button Styles */
+.mobile-menu .mobile-create-listing-btn {
+  display: block;
+  width: 80%;
+  padding: 10px 15px;
+  background-color: darkcyan;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  text-align: center;
+  margin: 10px 10px 10px 10px;
+}
+
+.mobile-menu .mobile-create-listing-btn:hover {
+  background-color: #008b8b;
+}
+
+/* General mobile menu button styles (less specific to avoid overriding) */
+.mobile-menu button:not(.mobile-create-listing-btn) {
+  width: 100%;
+  padding: 15px;
+  background-color: darkcyan;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.mobile-menu button:not(.mobile-create-listing-btn):hover {
+  background-color: #008b8b;
+}
+
+/* Scrollable List */
+.scrollable-list {
+  max-height: calc(80vh - 120px); /* Adjust for logo header height */
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.scrollable-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollable-list::-webkit-scrollbar-thumb {
+  background-color: #ccc;
+  border-radius: 4px;
+}
+
+.mobile-menu button {
+  width: 70%;
+  padding: 15px;
+
+  background-color: darkcyan;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.mobile-menu button:hover {
+  background-color: darkcyan;
+}
+
+.overlay {
+  display: none;
+}
+
+.overlay.active,
+.mobile-menu.active + .overlay {
+  display: block;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 998;
+}
+
+.fixed {
+  /* position: fixed; */
+  top: 0;
+  width: 100%;
+  z-index: 999;
+}
+
+/* .transparent-header {
+  background: transparent;
+  color: white;
+} */
+
+.white-header {
+  position: relative;
+  color: white !important;
+  height: 100px;
+}
+
+.text-dark a,
+.white-header .nav-links a,
+.white-header .dropdown-menu a {
+  color: black !important;
+}
+
+.transparent-header .nav-links a,
+.transparent-header .dropdown-menu a {
+  color: white !important;
+}
+
+header {
+  position: fixed;
+ background: linear-gradient(90deg, rgba(14, 116, 144, 0.95), rgba(21, 94, 117, 0.95));
+  width: 100%; /* already makes it full screen width */
+  z-index: 999;
+  margin-bottom: 20px;
+  transition: background-color 0.3s ease;
+  margin-top: 20px;
+  /* padding: 20px;/ */
+}
+
+header.scrolled {
+  position: absolute;
+}
+
+/* The inner nav container to center content */
+.nav {
+  /* max-width: 100%; /* 
+  width: 100%;  */
+  margin: 0 auto; /* center horizontally */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: nowrap;
+  box-sizing: border-box;
+  color: white;
+  position: relative;
+  margin-right: 10px  ;
+}
+
+/* Left side - mobile menu toggle */
+.mobile-left {
+  display: flex;
+  align-items: center;
+}
+
+/* Center - logo */
+.mobile-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-grow: 1;
+}
+
+/* Adjust logo and text spacing */
+.mobile-center img {
+  width: 100px;
+  margin-top: -20px;
+}
+
+.mobile-center span {
+  margin-left: -20px;
+  margin-bottom: 20px;
+  font-size: 30px;
+  font-weight: bold;
+  /* color: white; */
+  user-select: none;
+}
+/* Dropdown container */
+.scrollable-list::-webkit-scrollbar {
+  width: 6px;
+}
+.scrollable-list::-webkit-scrollbar-thumb {
+  background-color: #ccc;
+  border-radius: 4px;
+}
+.scrollable-list {
+  overflow-y: auto;
+}
+/* Pageheader.css */
+
+/* Force dropdown items to be black even in transparent header */
+.transparent-header .dropdown-menu li a,
+.transparent-header .dropdown-menu li {
+  color: black !important;
+}
+
+.desktop-nav .nav-links {
+  display: flex;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  align-items: center;
+}
+
+/* Top-level links */
+.desktop-nav .nav-links li {
+  position: relative;
+  /* padding: 10px 14px; */
+}
+
+.desktop-nav .nav-links li a {
+  text-decoration: none;
+  color: #333;
+  position: relative;
+  transition: color 0.3s ease;
+  display: inline-block;
+}
+
+.desktop-nav .nav-links li a strong {
+  color: white;
+  text-decoration: none;
+  font-size: 20px;
+  font-family: Arial, Helvetica, sans-serif;
+  transition: color 0.3s ease, background 0.3s ease;
+  padding: 6px 12px;
+  border-radius: 6px;
+  display: block;
+}
+
+.desktop-nav .nav-links li a:hover strong::after {
+  width: 100%;
+}
+
+/* Hover color transition */
+.desktop-nav .nav-links li a:hover {
+  color: darkcyan;
+}
+
+/* Dropdown Styles */
+.desktop-nav .dropdown:hover .dropdown-menu {
+  display: block;
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 180px;
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  padding: 10px 0;
+  display: none;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all 0.35s ease;
+  z-index: 999;
+}
+
+/* Dropdown items */
+.dropdown-menu li {
+  /* padding: 8px 20px; */
+  text-align: left;
+  white-space: nowrap;
+  transition: background 0.3s ease;
+}
+
+.dropdown-menu li a {
+  color: #333;
+  font-size: 14px;
+  transition: color 0.3s ease;
+}
+
+.dropdown-menu li a:hover {
+  color: darkcyan;
+  background-color: #f8f9fa;
+  display: block;
+}
+
+.nearprop-logo-text {
+  /* margin-left: -20px; */
+  margin-bottom: 20px;
+  font-size: 30px;
+  background-color: transparent;
+  font-weight: bold;
+}
+
+/* 📱 Mobile Specific Adjustments */
+@media (max-width: 768px) {
+  /* Header color tweak */
+  header {
+    background-color: #004d4d; /* darker cyan */
+    margin-top: 0;
+  }
+
+  /* Force white text for better visibility */
+  .nav,
+  .nav a,
+  .logo,
+  .nearprop-logo-text {
+    color: white !important;
+  }
+
+
+  .nearprop-logo-text-color{
+    color: #004d4d;
+  }
+  /* Search box compact design */
+  .search-box {
+    position: relative;
+    width: 95%;
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  /* Form stacked nicely */
+  .search-form {
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    padding: 0;
+  }
+
+  .search-form label {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    margin-left: 0;
+  }
+
+  .search-form select {
+    width: 100%;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+  }
+
+  /* Full-width button */
+  .btn-search {
+    width: 100%;
+    font-size: 15px;
+    font-weight: 600;
+    background: #006666;
+    border-radius: 6px;
+  }
+
+  /* Hide desktop-only elements */
+  .create-listing-btn,
+  .crisp,
+  .dousy {
+    display: none;
+  }
+
+  /* Mobile nav */
+  .desktop-nav,
+  .desktop-auth {
+    display: none;
+  }
+
+  .menu-toggle {
+    display: flex;
+    margin: 0;
+  }
+
+  /* Scrollable list inside mobile menu */
+  .scrollable-list {
+    max-height: 75vh;
+    overflow-y: auto;
+    padding-right: 6px;
+  }
+
+  .scrollable-list::-webkit-scrollbar {
+    width: 5px;
+  }
+  .scrollable-list::-webkit-scrollbar-thumb {
+    background: #999;
+    border-radius: 4px;
+  }
+}
+
+/* Default logo styling (mobile included) */
+.desktop-logo-img {
+  width: 100px;
+  margin-top: -20px;
+}
+
+.desktop-logo-text {
+  margin-left: -20px;
+  margin-bottom: 20px;
+  font-size: 30px;
+  font-weight: bold;
+}
+
+.mobile-create-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px;
+  border-bottom: 1px solid #ddd;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-toggle {
+  text-decoration: none;
+  color: #000;
+  font-weight: bold;
+  padding: 10px;
+  display: block;
+}
+
+.dropdown-menu {
+  display: none;
+  position: absolute;
+  background-color: #fff;
+  min-width: 160px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  z-index: 1;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  text-align: center;
+}
+
+.dropdown-menu li a {
+  text-decoration: none;
+  color: #000;
+  display: block;
+}
+
+.dropdown-menu li a:hover {
+  background-color: #f1f1f1;
+}
+
+.dropdown:hover .dropdown-menu {
+  display: block;
+}
+.dropdown-item:hover {
+  background-color: grey !important;
+  color: #343a40 !important; /* Matches text-dark */
+}
+
+/* Optional: Ensure the dropdown menu itself doesn't interfere */
+.dropdown-menu {
+  background-color: #fff; /* Ensure dropdown background is white */
+}
+.dropdown-menu {
+  background-color: #fff;
+}
+
+/* Mobile Header Layout */
+@media (max-width: 768px) {
+  .mobile-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* left, center, right */
+    padding: 10px 15px;
+    background: #004d4d; /* same as header background */
+  }
+
+  .mobile-left .menu-toggle {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    cursor: pointer;
+  }
+  .mobile-left .menu-toggle span {
+    width: 25px;
+    height: 3px;
+    background: white;
+    border-radius: 3px;
+  }
+
+  .mobile-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1; /* center will take space */
+  }
+  .mobile-center img {
+    width: 40px;
+    height: auto;
+    margin-right: 8px;
+  }
+  .mobile-center span {
+    font-size: 20px;
+    font-weight: bold;
+    color: white;
+  }
+
+  .mobile-right a {
+    color: white;
+    font-size: 22px;
+  }
+
+  /* Hide desktop nav in mobile */
+  .desktop-nav, .crisp, .dousy {
+    display: none !important;
+  }
+}

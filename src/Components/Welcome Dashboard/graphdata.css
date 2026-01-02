@@ -1,0 +1,43 @@
+.graphdata {
+  width: 100%; /* Full width on mobile */
+  max-width: 660px;
+  height: 480px;
+  /* background: #bc0000; */
+  border-radius: 8px;
+  border: 2px solid blue;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: none;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto; /* Center the container */
+  box-sizing: border-box; /* Include padding in width calculation */
+}
+
+.graphdata-title {
+  display: flex;
+  width: 100%;
+  height: auto;
+  align-items: center;
+  justify-content: center;
+  font-family: "Arial Black", Gadget, sans-serif;
+  font-size: 22px;
+  letter-spacing: 0.4px;
+  word-spacing: 2px;
+  color: #003bff;
+  font-weight: 400;
+  text-decoration: rgb(68, 68, 68);
+  font-style: normal;
+  font-variant: small-caps;
+  text-transform: capitalize;
+}
+
+/* Title section for the graph */
+.graphdata-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #444;
+  margin-bottom: 12px;
+  text-align: center;
+}

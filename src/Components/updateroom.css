@@ -1,0 +1,185 @@
+/* updateroom.css */
+
+/* Container Styles */
+.update-room-container {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Title Styles */
+.update-room-title {
+  text-align: center;
+  color: #2c3e50;
+  margin-bottom: 2rem;
+  font-weight: 600;
+  font-size: 1.8rem;
+  position: relative;
+  padding-bottom: 0.5rem;
+}
+
+.update-room-title::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 3px;
+  background-color: #3498db;
+  border-radius: 2px;
+}
+
+/* Form Styles */
+.update-room-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Field Container */
+.update-room-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Label Styles */
+.update-room-label {
+  font-weight: 500;
+  color: #34495e;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Input and Select Styles */
+.update-room-input,
+.update-room-select {
+  padding: 0.75rem 1rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background-color: #f9f9f9;
+}
+
+.update-room-input:focus,
+.update-room-select:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+  background-color: #fff;
+}
+
+/* Seasonal Prices Section */
+.update-room-seasonal-prices {
+  padding: 1.5rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #3498db;
+}
+
+.update-room-seasonal-field {
+  margin-bottom: 1rem;
+}
+
+/* Button Container */
+.update-room-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #eee;
+}
+
+/* Button Styles */
+.update-room-submit-btn,
+.update-room-cancel-btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.update-room-submit-btn {
+  background-color: #3498db;
+  color: white;
+}
+
+.update-room-submit-btn:hover {
+  background-color: #2980b9;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(41, 128, 185, 0.2);
+}
+
+.update-room-cancel-btn {
+  background-color: #e74c3c;
+  color: white;
+}
+
+.update-room-cancel-btn:hover {
+  background-color: #c0392b;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(192, 57, 43, 0.2);
+}
+
+/* Loading State */
+.update-room-loading {
+  text-align: center;
+  padding: 2rem;
+  font-size: 1.2rem;
+  color: #7f8c8d;
+}
+
+/* Responsive Design */
+@media (max-width: 900px) {
+  .update-room-container {
+    margin: 1rem;
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .update-room-buttons {
+    flex-direction: column;
+  }
+  
+  .update-room-submit-btn,
+  .update-room-cancel-btn {
+    width: 100%;
+  }
+}
+
+/* Animation for form elements */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.update-room-field {
+  animation: fadeIn 0.4s ease forwards;
+}
+
+.update-room-field:nth-child(1) { animation-delay: 0.1s; }
+.update-room-field:nth-child(2) { animation-delay: 0.2s; }
+.update-room-field:nth-child(3) { animation-delay: 0.3s; }
+.update-room-field:nth-child(4) { animation-delay: 0.4s; }
+.update-room-field:nth-child(5) { animation-delay: 0.5s; }
+.update-room-field:nth-child(6) { animation-delay: 0.6s; }
+.update-room-seasonal-prices { animation-delay: 0.7s; }
+.update-room-buttons { animation-delay: 0.8s; }

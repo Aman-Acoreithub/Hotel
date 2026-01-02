@@ -1,0 +1,118 @@
+/* ================= Container ================= */
+.cr-container {
+  max-width: 760px;
+  margin: 40px auto;
+  padding: 32px;
+  background: linear-gradient(135deg, #f8fafc, #eef2f7);
+  border-radius: 16px;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.12);
+  font-family: "Segoe UI", sans-serif;
+}
+
+/* ================= Heading ================= */
+.cr-heading {
+  text-align: center;
+  font-size: 28px;
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 30px;
+}
+
+/* ================= Form ================= */
+.cr-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* ================= Inputs ================= */
+.cr-input,
+.cr-form select {
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1.5px solid #cbd5e1;
+  font-size: 15px;
+  background: #ffffff;
+  color: #0f172a;
+  transition: all 0.25s ease;
+}
+
+.cr-input::placeholder {
+  color: #94a3b8;
+}
+
+.cr-input:focus,
+.cr-form select:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+/* ================= File Upload ================= */
+.cr-file-group {
+  background: #ffffff;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1.5px dashed #cbd5e1;
+  transition: 0.25s;
+}
+
+.cr-file-group:hover {
+  border-color: #6366f1;
+  background: #f8fafc;
+}
+
+.cr-file-label {
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 6px;
+  display: block;
+}
+
+.cr-file-input {
+  width: 100%;
+  cursor: pointer;
+}
+
+/* ================= Validation Text ================= */
+.cr-error {
+  font-size: 13px;
+  color: #dc2626;
+  margin-top: 4px;
+}
+
+/* ================= Submit Button ================= */
+.cr-submit-btn {
+  margin-top: 10px;
+  padding: 14px;
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 600;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.cr-submit-btn:hover:not(:disabled) {
+  box-shadow: 0 10px 25px rgba(99, 102, 241, 0.4);
+  transform: translateY(-2px);
+}
+
+.cr-submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ================= Responsive ================= */
+@media (max-width: 768px) {
+  .cr-container {
+    margin: 20px;
+    padding: 20px;
+  }
+
+  .cr-heading {
+    font-size: 22px;
+  }
+}

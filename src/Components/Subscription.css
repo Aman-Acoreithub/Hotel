@@ -1,0 +1,558 @@
+.subscription-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.auth-required {
+  text-align: center;
+  padding: 3rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.auth-required h2 {
+  color: #2c3e50;
+  margin-bottom: 1rem;
+}
+
+.auth-required p {
+  color: #7f8c8d;
+  margin-bottom: 2rem;
+}
+
+.login-button {
+  background: #3498db;
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.login-button:hover {
+  background: #2980b9;
+}
+
+.subscription-title {
+  text-align: center;
+  margin-bottom: 2rem;
+  color: #008b8b;
+  text-transform: uppercase;
+  text-decoration: none;
+  font-size: 48px;
+  font-family: Courier, monospace;
+}
+
+.subscription-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.subscription-card {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.subscription-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+}
+
+.subscription-card--featured {
+  border: 2px solid #3498db;
+  transform: scale(1.03);
+}
+
+.subscription-card--featured:hover {
+  transform: scale(1.03) translateY(-5px);
+}
+
+.subscription-card__badge {
+  position: absolute;
+  top: -10px;
+  right: 20px;
+  background: #e74c3c;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.subscription-card__title {
+  color: #2c3e50;
+  margin: 0 0 1rem 0;
+  font-size: 1.5rem;
+}
+
+.subscription-card__price {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #3498db;
+  margin: 0 0 1.5rem 0;
+}
+
+.subscription-card__price span {
+  font-size: 1rem;
+  color: #7f8c8d;
+}
+
+.subscription-card__features {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 2rem 0;
+  flex-grow: 1;
+}
+
+.subscription-card__features li {
+  padding: 0.5rem 0;
+  color: #34495e;
+}
+
+.subscription-card__button {
+  background: #3498db;
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.subscription-card__button:hover {
+  background: #2980b9;
+}
+
+.subscription-loading,
+.subscription-error,
+.subscription-empty {
+  text-align: center;
+  font-size: 1.2rem;
+  margin: 2rem 0;
+  color: #7f8c8d;
+}
+
+.subscription-error {
+  color: #e74c3c;
+}
+
+.subscription-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.subscription-modal {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  max-width: 600px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.modal-close-button {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #7f8c8d;
+}
+
+.subscription-modal__title {
+  color: #2c3e50;
+  margin: 0 0 1.5rem 0;
+  font-size: 1.8rem;
+  text-align: center;
+}
+
+.subscription-modal__section {
+  margin-bottom: 1.5rem;
+}
+
+.subscription-modal__label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.subscription-modal__select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 1rem;
+  margin-bottom: 1rem;
+}
+
+.subscription-modal__loading,
+.subscription-modal__error,
+.subscription-modal__info {
+  padding: 0.75rem;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+
+.subscription-modal__loading {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+.subscription-modal__error {
+  background: #ffebee;
+  color: #c62828;
+}
+
+.subscription-modal__info {
+  background: #f5f5f5;
+  color: #616161;
+}
+
+.subscription-modal__subtitle {
+  color: #2c3e50;
+  margin: 1.5rem 0 1rem 0;
+  font-size: 1.2rem;
+}
+
+.subscription-modal__coupon-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.subscription-modal__coupon-card {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 1rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.subscription-modal__coupon-card:hover {
+  border-color: #3498db;
+}
+
+.subscription-modal__coupon-card--selected {
+  border-color: #3498db;
+  background: #e3f2fd;
+}
+
+.subscription-modal__coupon-code {
+  margin: 0 0 0.5rem 0;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.subscription-modal__coupon-discount {
+  margin: 0;
+  color: #27ae60;
+  font-weight: 500;
+}
+
+.subscription-modal__coupon-check {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  color: #27ae60;
+  font-weight: bold;
+}
+
+.subscription-modal__coupon-status,
+.subscription-modal__coupon-valid,
+.subscription-modal__coupon-error {
+  padding: 0.5rem;
+  border-radius: 4px;
+  margin: 0.5rem 0;
+}
+
+.subscription-modal__coupon-status {
+  background: #fff3e0;
+  color: #ef6c00;
+}
+
+.subscription-modal__coupon-valid {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.subscription-modal__coupon-error {
+  background: #ffebee;
+  color: #c62828;
+}
+
+.subscription-modal__button-group {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+}
+
+.subscription-modal__purchase-button {
+  background: #27ae60;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.subscription-modal__purchase-button:hover:not(:disabled) {
+  background: #219653;
+}
+
+.subscription-modal__purchase-button:disabled {
+  background: #bdc3c7;
+  cursor: not-allowed;
+}
+
+.subscription-modal__cancel-button {
+  background: #e74c3c;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.subscription-modal__cancel-button:hover {
+  background: #c0392b;
+}
+
+@media (max-width: 768px) {
+  .subscription-container {
+    padding: 1rem;
+  }
+
+  .subscription-title {
+    font-size: 2rem;
+  }
+
+  .subscription-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .subscription-modal {
+    padding: 1.5rem;
+  }
+
+  .subscription-modal__button-group {
+    flex-direction: column;
+  }
+}
+
+
+
+
+
+
+/* --------------------- */
+/* Coupon Section Wrapper */
+.subscription-modal__coupon-section {
+  margin-top: 24px;
+  padding: 20px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #f9fafb, #f1f5f9);
+  border: 1px dashed #cbd5e1;
+}
+
+/* Title */
+.subscription-modal__subtitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 12px;
+}
+
+/* Input + Button Wrapper */
+.subscription-modal__coupon-input {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+/* Input */
+.subscription-modal__input {
+  flex: 1;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1.5px solid #cbd5e1;
+  font-size: 14px;
+  transition: all 0.25s ease;
+  background: #ffffff;
+}
+
+.subscription-modal__input::placeholder {
+  color: #94a3b8;
+}
+
+.subscription-modal__input:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+/* Apply Button */
+.subscription-modal__apply-button {
+  padding: 12px 18px;
+  border-radius: 10px;
+  border: none;
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.subscription-modal__apply-button:hover:not(:disabled) {
+  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.35);
+}
+
+.subscription-modal__apply-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Loading Text */
+.subscription-modal__coupon-status {
+  margin-top: 10px;
+  font-size: 13px;
+  color: #475569;
+  font-style: italic;
+}
+
+/* Success Message */
+.subscription-modal__coupon-valid {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #166534;
+  background: #dcfce7;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #86efac;
+}
+
+/* Error Message */
+.subscription-modal__coupon-error {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #991b1b;
+  background: #fee2e2;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #fca5a5;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .subscription-modal__coupon-input {
+    flex-direction: column;
+  }
+
+  .subscription-modal__apply-button {
+    width: 100%;
+  }
+}
+/* Price Section Wrapper */
+.subscription-modal__price-section {
+  margin-top: 24px;
+  padding: 18px 20px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #ffffff, #f8fafc);
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+}
+
+/* Common Text */
+.subscription-modal__price-section p {
+  font-size: 14px;
+  color: #334155;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+/* Original Price */
+.subscription-modal__price-section p:first-child {
+  color: #475569;
+}
+
+/* Discounted Price */
+.subscription-modal__price-section p:nth-child(2) {
+  color: #166534;
+  font-weight: 600;
+}
+
+/* GST Line */
+.subscription-modal__price-section p:nth-last-child(2) {
+  color: #1e293b;
+}
+
+/* Total Amount */
+.subscription-modal__price-section p strong {
+  font-size: 16px;
+  color: #0f172a;
+}
+
+/* Highlight Total */
+.subscription-modal__price-section p:last-child {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px dashed #cbd5e1;
+}
+
+/* Mobile Responsive */
+@media (max-width: 640px) {
+  .subscription-modal__price-section {
+    padding: 16px;
+  }
+
+  .subscription-modal__price-section p {
+    font-size: 13px;
+  }
+
+  .subscription-modal__price-section p strong {
+    font-size: 15px;
+  }
+}
