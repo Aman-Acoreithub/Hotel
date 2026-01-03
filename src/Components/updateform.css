@@ -1,4 +1,4 @@
-.update-form-container {
+/* .update-form-container {
   max-width: 600px;
   margin: 40px auto;
   padding: 25px;
@@ -54,4 +54,61 @@
 
 .update-btn:hover {
   background: #2980b9;
+} */
+
+
+
+/* UpdateForm.css */
+
+/* Ensure images maintain aspect ratio */
+.update-form img {
+  object-fit: cover;
+}
+
+/* Smooth delete button fade-in on hover (enhancement) */
+.property-image-card .delete-btn {
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.property-image-card:hover .delete-btn {
+  opacity: 1;
+}
+
+/* Optional: Better focus ring for accessibility */
+.update-form input:focus,
+.update-form textarea:focus,
+.update-form select:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.5); /* Tailwind teal-400/50 */
+}
+
+/* Prevent image distortion in preview cards */
+.image-preview-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Optional: Scrollable checkboxes on small screens */
+.checkbox-grid {
+  max-height: 200px;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+/* Custom scrollbar (optional, modern browsers) */
+.checkbox-grid::-webkit-scrollbar {
+  width: 6px;
+}
+.checkbox-grid::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+.checkbox-grid::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+.checkbox-grid::-webkit-scrollbar-thumb:hover {
+  background: #a0aec0;
 }

@@ -325,7 +325,7 @@ Hotelts Card */}
         </div>
 
         {/* PLAN DETAILS */}
-        <div className="bg-gradient-to-r from-teal-50 to-white rounded-2xl shadow-lg p-6 mb-8 border border-teal-100">
+        {/* <div className="bg-gradient-to-r from-teal-50 to-white rounded-2xl shadow-lg p-6 mb-8 border border-teal-100">
           <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
             <div>
               <h3 className="text-2xl font-bold text-gray-800 mb-2">
@@ -401,7 +401,7 @@ Hotelts Card */}
               </button>
             </Link>
           </div>
-        </div>
+        </div> */}
       </div>
     </>
   );

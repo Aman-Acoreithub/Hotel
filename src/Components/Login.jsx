@@ -179,6 +179,7 @@ const Login = () => {
   const navigate = useNavigate();
 
   const baseUrl = "https://hotel-banquet.nearprop.in";
+  // const baseUrl = import.meta.env.VITE_URL;
 
   // Already logged in → Dashboard
   const token = localStorage.getItem("token");

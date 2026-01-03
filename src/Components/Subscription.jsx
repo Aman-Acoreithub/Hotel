@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 import axios from "axios";
 import { showSuccess, showError, showInfo, showWarning } from "../utils/Toast";
 import "react-toastify/dist/ReactToastify.css";
-import { toast, ToastContainer } from "react-toastify";
+import { toast } from "react-toastify";
 
 import Modal from "react-modal";
 import { motion, AnimatePresence } from "framer-motion";
@@ -19,7 +19,6 @@ const Subscription = () => {
   const [couponCode, setCouponCode] = useState("");
   const [couponInfo, setCouponInfo] = useState(null);
   const [finalPrice, setFinalPrice] = useState(null);
-  const [gstAmount, setGstAmount] = useState(null);
   const [totalAmount, setTotalAmount] = useState(null);
   const [selectedHotel, setSelectedHotel] = useState("");
   const [selectedBanquet, setSelectedBanquet] = useState("");
@@ -35,12 +34,19 @@ const Subscription = () => {
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
+  const [authorizedAmount, setAuthorizedAmount] = useState(null);
 
   const location = useLocation();
   const { id: preSelectedId, type: preSelectedType } = location.state || {};
 
   // Generic fetch function
-  const fetchData = async (url, setData, setLoading, setError, isHotel = false) => {
+  const fetchData = async (
+    url,
+    setData,
+    setLoading,
+    setError,
+    isHotel = false
+  ) => {
     setLoading(true);
     setError(null);
     try {
@@ -73,7 +79,9 @@ const Subscription = () => {
         setIsAuthenticated(false);
         localStorage.removeItem("token");
       }
-      setError(err.response?.data?.message || err.message || "Failed to fetch data");
+      setError(
+        err.response?.data?.message || err.message || "Failed to fetch data"
+      );
       setData([]);
     } finally {
       setLoading(false);
@@ -94,7 +102,9 @@ const Subscription = () => {
       setLoading(true);
       setError(null);
       try {
-        const plansRes = await axios.get("https://hotel-banquet.nearprop.in/api/subscriptions/plans");
+        const plansRes = await axios.get(
+          "https://hotel-banquet.nearprop.in/api/subscriptions/plans"
+        );
         if (plansRes.data.success) {
           setPlans(plansRes.data.data);
         } else {
@@ -126,26 +136,17 @@ const Subscription = () => {
   // Handle pre-selected hotel or banquet
   useEffect(() => {
     if (preSelectedId && preSelectedType && plans.length > 0) {
-      const plan = plans.find((p) => p.planFor === preSelectedType.toLowerCase());
+      const plan = plans.find(
+        (p) => p.planFor === preSelectedType.toLowerCase()
+      );
       if (plan) {
         setSelectedPlan(plan);
 
-        // Calculate discounted price (same as plan price if no coupon)
         const discountedPrice = plan.price;
+        const roundedPrice = Math.round(discountedPrice * 100) / 100;
+        setFinalPrice(roundedPrice);
+        setTotalAmount(roundedPrice);
 
-        // Round to 2 decimal places for UI and payment consistency
-        const roundedDiscountedPrice = Math.round(discountedPrice * 100) / 100;
-        setFinalPrice(roundedDiscountedPrice);
-
-        // Calculate GST on the rounded discounted price
-        const gst = Math.round(roundedDiscountedPrice * 0.18 * 100) / 100;
-        setGstAmount(gst);
-
-        // Calculate total (rounded, discounted price + rounded GST)
-        const totalAmount = Math.round((roundedDiscountedPrice + gst) * 100) / 100;
-        setTotalAmount(totalAmount);
-
-        // Set preselected hotel or banquet
         if (preSelectedType === "Hotel") {
           setSelectedHotel(preSelectedId);
         } else if (preSelectedType === "Banquet") {
@@ -164,16 +165,18 @@ const Subscription = () => {
       return;
     }
     setSelectedPlan(plan);
-
-    setFinalPrice(plan.price);
-    const gst = plan.price * 0.18; // ✅ GST 18%
-    setGstAmount(gst);
-    setTotalAmount(plan.price + gst); // ✅ Base + GST
+    const roundedPrice = Math.round(plan.price * 100) / 100;
+    setFinalPrice(roundedPrice);
+    setTotalAmount(roundedPrice);
     setCouponCode("");
     setCouponInfo(null);
     setCouponError(null);
-    setSelectedHotel(preSelectedId && preSelectedType === "Hotel" ? preSelectedId : "");
-    setSelectedBanquet(preSelectedId && preSelectedType === "Banquet" ? preSelectedId : "");
+    setSelectedHotel(
+      preSelectedId && preSelectedType === "Hotel" ? preSelectedId : ""
+    );
+    setSelectedBanquet(
+      preSelectedId && preSelectedType === "Banquet" ? preSelectedId : ""
+    );
     setModalIsOpen(true);
   };
 
@@ -185,7 +188,6 @@ const Subscription = () => {
     setCouponCode("");
     setCouponInfo(null);
     setFinalPrice(null);
-    setGstAmount(null);
     setTotalAmount(null);
     setSelectedHotel("");
     setSelectedBanquet("");
@@ -193,79 +195,83 @@ const Subscription = () => {
 
   // Validate coupon code
   const validateCoupon = async () => {
-    if (!couponCode || (selectedPlan?.planFor === "hotel" && !selectedHotel) || (selectedPlan?.planFor === "banquet" && !selectedBanquet)) {
+    if (
+      !couponCode ||
+      (selectedPlan?.planFor === "hotel" && !selectedHotel) ||
+      (selectedPlan?.planFor === "banquet" && !selectedBanquet)
+    ) {
       setCouponInfo(null);
       setCouponError(null);
-      setFinalPrice(selectedPlan?.price);
-      const gst = selectedPlan.price * 0.18; // ✅ GST
-      setGstAmount(gst);
-      setTotalAmount(selectedPlan.price + gst);
+      const roundedPrice = Math.round(selectedPlan?.price * 100) / 100;
+      setFinalPrice(roundedPrice);
+      setTotalAmount(roundedPrice);
       return;
     }
+
     setCouponLoading(true);
     setCouponError(null);
     try {
-      const res = await axios.get(`https://hotel-banquet.nearprop.in/api/coupons/${couponCode}`);
-      if (!res.data.data.planFor || res.data.data.planFor === selectedPlan.planFor) {
+      const res = await axios.get(
+        `https://hotel-banquet.nearprop.in/api/subscriptions/validate-coupon/${couponCode}`
+      );
+      if (
+        !res.data.data.planFor ||
+        res.data.data.planFor === selectedPlan.planFor
+      ) {
         setCouponInfo(res.data.data);
 
-        const discount = res.data.data.discountType === "percentage"
-          ? selectedPlan.price * (res.data.data.discountValue / 100)
-          : res.data.data.discountValue;
+        const discount =
+          res.data.data.discountType === "percentage"
+            ? selectedPlan.price * (res.data.data.discountValue / 100)
+            : res.data.data.discountValue;
 
-        // Guarantee discountedPrice is never negative
         const discountedPrice = Math.max(0, selectedPlan.price - discount);
+        const roundedPrice = Math.round(discountedPrice * 100) / 100;
 
-        // Round to 2 decimal places for display and payment consistency
-        const roundedDiscountedPrice = Math.round(discountedPrice * 100) / 100;
-        setFinalPrice(roundedDiscountedPrice);
-
-        // GST is 18% of the discounted price, also rounded
-        const gst = Math.round(roundedDiscountedPrice * 0.18 * 100) / 100;
-        setGstAmount(gst);
-
-        // Total = discounted price + GST, rounded
-        const totalAmount = Math.round((roundedDiscountedPrice + gst) * 100) / 100;
-        setTotalAmount(totalAmount);
-      }
-      else {
+        setFinalPrice(roundedPrice);
+        setTotalAmount(roundedPrice);
+      } else {
         setCouponInfo(null);
-        if (res.data.data?.planFor && res.data.data.planFor !== selectedPlan.planFor) {
+        if (
+          res.data.data?.planFor &&
+          res.data.data.planFor !== selectedPlan.planFor
+        ) {
           setCouponError("Coupon not applicable to this plan type");
         } else {
           setCouponError("Coupon is invalid or inactive");
         }
-        setFinalPrice(selectedPlan.price);
-        const gst = selectedPlan.price * 0.18;
-        setGstAmount(gst);
-        setTotalAmount(selectedPlan.price + gst);
+        const roundedPrice = Math.round(selectedPlan.price * 100) / 100;
+        setFinalPrice(roundedPrice);
+        setTotalAmount(roundedPrice);
       }
-
     } catch (err) {
       setCouponInfo(null);
-      setCouponError(err.response?.data?.message || "Failed to validate coupon");
-      setFinalPrice(selectedPlan.price);
-      setGstAmount(selectedPlan.price * 1);
-      setTotalAmount(selectedPlan.price * 1);
+      setCouponError(
+        err.response?.data?.message || "Failed to validate coupon"
+      );
+      const roundedPrice = Math.round(selectedPlan.price * 100) / 100;
+      setFinalPrice(roundedPrice);
+      setTotalAmount(roundedPrice);
     } finally {
       setCouponLoading(false);
     }
   };
 
-  // Handle coupon code input change
+  // Handle coupon input
   const handleCouponChange = (e) => {
     setCouponCode(e.target.value);
   };
 
-  // Apply coupon on button click
+  // Apply coupon
   const handleApplyCoupon = () => {
     if (couponCode) {
       validateCoupon();
     } else {
       setCouponInfo(null);
       setCouponError("Please enter a coupon code");
-      setFinalPrice(selectedPlan?.price);
-
+      const roundedPrice = Math.round(selectedPlan?.price * 100) / 100;
+      setFinalPrice(roundedPrice);
+      setTotalAmount(roundedPrice);
     }
   };
 
@@ -284,120 +290,98 @@ const Subscription = () => {
     });
   };
 
-  // Handle purchase
+ 
   const handlePurchase = async () => {
-    if (!selectedPlan) {
-      showWarning("Please select a plan to purchase.");
-      return;
-    }
-    if (selectedPlan.planFor === "hotel" && !selectedHotel) {
-      showWarning("Please select a hotel.");
-      return;
-    }
-    if (selectedPlan.planFor === "banquet" && !selectedBanquet) {
-      showWarning("Please select a banquet hall.");
-      return;
-    }
-    if (couponCode && !couponInfo) {
-      showWarning("Please apply a valid coupon or remove the coupon code.");
-      return;
-    }
-    setPurchaseLoading(true);
-    setError(null);
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        showWarning("You must be logged in to purchase a plan.");
-        setPurchaseLoading(false);
-        return;
-      }
-      const payload = {
-        hotelId: selectedPlan.planFor === "hotel" ? selectedHotel : undefined,
-        banquetHallId: selectedPlan.planFor === "banquet" ? selectedBanquet : undefined,
-        planId: selectedPlan._id,
-        couponCode: couponInfo ? couponCode : undefined,
-        amount: totalAmount, // <-- Send rupees with decimals, NOT paise as integer
-        paymentId: "xyz123", // <-- Replace with the actual Razorpay payment ID after payment
-      };
+  if (!selectedPlan) {
+    showWarning("Please select a plan");
+    return;
+  }
 
+  setPurchaseLoading(true);
 
-      console.log("Purchase payload:", payload);
-      // const res = await axios.post(
-      //   "https://hotel-banquet.nearprop.in/api/subscriptions/plans/purchase",
-      //   payload,
-      //   {
-      //     headers: {
-      //       Authorization: `Bearer ${token}`,
-      //       "Content-Type": "application/json",
-      //     },
-      //   }
-      // );
-      // if (!res.data.success) {
-      //   alert("Failed to create order: " + res.data.message);
-      //   setPurchaseLoading(false);
-      //   return;
-      // }
-      // const { order } = res.data;
-      const scriptLoaded = await loadRazorpayScript();
-      if (!scriptLoaded) {
-        showError("Failed to load Razorpay SDK.");
-        setPurchaseLoading(false);
-        return;
-      }
-      const options = {
-        key: "rzp_live_RydWSyrJc8vjYO",  // ← Updated to live key
-        amount: Math.floor(totalAmount * 100), // Convert rupees to paise
-        currency: 'INR',
-        name: "Hotel Banquet",
-        description: `Subscription for ${selectedPlan.name}`,
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      showWarning("Login required");
+      return;
+    }
+    // if(razorpayPaymentId){
+    //   setPurchaseLoading(false);
+    //   return;
+    // }
 
-        handler: async function (response) {
-          try {
-            const purchaseRes = await axios.post(
-              "https://hotel-banquet.nearprop.in/api/subscriptions/plans/purchase",
-              payload,
-              {
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                  "Content-Type": "application/json",
-                },
-              }
-            );
-            if (purchaseRes.data.success) {
-              toast.success("✅ Payment successful! Subscription activated.");
-              closeModal();
-            } else {
-              showError("❌ Subscription activation failed: " + purchaseRes.data.message);
+    const loaded = await loadRazorpayScript();
+    if (!loaded) {
+      showError("Razorpay SDK failed");
+      return;
+    }
+
+    // ✅ SAFE AMOUNT LOGIC
+    const payableAmount = Number(totalAmount) || 0;
+    const amountInPaise =
+      payableAmount <= 0 ? 100 : Math.round(payableAmount * 100);
+
+   
+
+    const options = {
+      key: "rzp_live_RydWSyrJc8vjYO",
+      amount: amountInPaise,
+      currency: "INR",
+      name: "Hotel Banquet",
+      description: `Subscription for ${selectedPlan.name}`,
+
+      handler: async (response) => {
+        try {
+          const captureRes = await axios.post(
+            "https://hotel-banquet.nearprop.in/api/payment/capture-payment",
+            {
+              razorpay_payment_id: "pay_RzQKcBVRZRp64N",
+              amount: "1",
+            
+            },
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
             }
-          } catch (err) {
-            showError("⚠️ Error activating subscription: " + (err.response?.data?.message || err.message));
-          } finally {
-            setPurchaseLoading(false);
+          );
+
+          if (captureRes.data.success) {
+            toast.success("✅ Subscription activated");
+            closeModal();
+          } else {
+            showError("Payment capture failed");
           }
-        },
-        prefill: {
-          name: "User Name",
-          email: "xyz@example.com",
-        },
-        theme: {
-          color: "#0d89c7ff",
-        },
-      };
-      const rzp = new window.Razorpay(options);
-      rzp.open();
-    } catch (err) {
-      showError("Error creating order: " + (err.response?.data?.message || err.message));
-      setPurchaseLoading(false);
-    }
-  };
+        } catch (err) {
+          showError(err.response?.data?.message || "Capture error");
+        } finally {
+          setPurchaseLoading(false);
+        }
+      },
+
+      theme: { color: "#0d89c7ff" },
+    };
+
+    new window.Razorpay(options).open();
+  } catch (err) {
+    showError("Payment error");
+  } finally {
+    setPurchaseLoading(false);
+  }
+};
+
+
+
 
   const handleLoginRedirect = () => {
     window.location.href = "/login";
-    setIsAuthenticated(true);
   };
 
   if (!authChecked) {
-    return <div className="subscription-loading">Checking authentication...</div>;
+    return (
+      <div className="subscription-loading">Checking authentication...</div>
+    );
   }
 
   if (!isAuthenticated) {
@@ -414,7 +398,8 @@ const Subscription = () => {
     );
   }
 
-  if (loading) return <div className="subscription-loading">Loading plans...</div>;
+  if (loading)
+    return <div className="subscription-loading">Loading plans...</div>;
   if (error) return <div className="subscription-error">Error: {error}</div>;
 
   const filteredPlans = preSelectedType
@@ -445,7 +430,11 @@ const Subscription = () => {
             {hotelPlans.map((plan, idx) => (
               <motion.div
                 key={plan._id}
-                className={`subscription-card ${plan.planType === "monthly" ? "subscription-card--featured" : ""}`}
+                className={`subscription-card ${
+                  plan.planType === "monthly"
+                    ? "subscription-card--featured"
+                    : ""
+                }`}
                 initial={{ opacity: 0, y: 50 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.1 * idx }}
@@ -478,7 +467,9 @@ const Subscription = () => {
       {(!preSelectedType || preSelectedType === "Banquet") && (
         <>
           <br />
-          <h2 className="subscription-subtitle">🎉 Banquet Subscription Plans</h2>
+          <h2 className="subscription-subtitle">
+            🎉 Banquet Subscription Plans
+          </h2>
           <div className="subscription-cards">
             {banquetPlans.length === 0 && (
               <p className="subscription-empty">No banquet plans available</p>
@@ -486,7 +477,11 @@ const Subscription = () => {
             {banquetPlans.map((plan, idx) => (
               <motion.div
                 key={plan._id}
-                className={`subscription-card ${plan.planType === "monthly" ? "subscription-card--featured" : ""}`}
+                className={`subscription-card ${
+                  plan.planType === "monthly"
+                    ? "subscription-card--featured"
+                    : ""
+                }`}
                 initial={{ opacity: 0, y: 50 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.1 * idx }}
@@ -530,22 +525,32 @@ const Subscription = () => {
               exit={{ opacity: 0, scale: 0.8 }}
               transition={{ duration: 0.3 }}
             >
-              <button className="modal-close-button" onClick={closeModal} aria-label="Close modal">
+              <button
+                className="modal-close-button"
+                onClick={closeModal}
+                aria-label="Close modal"
+              >
                 ×
               </button>
-              <h2 className="subscription-modal__title">Purchase {selectedPlan?.name}</h2>
+              <h2 className="subscription-modal__title">
+                Purchase {selectedPlan?.name}
+              </h2>
+
               <div className="subscription-modal__section">
                 {selectedPlan?.planFor === "hotel" && (
                   <>
-                    <label htmlFor="hotelSelect" className="subscription-modal__label">
+                    <label
+                      htmlFor="hotelSelect"
+                      className="subscription-modal__label"
+                    >
                       Select Hotel
                     </label>
                     {hotelsLoading ? (
-                      <p className="subscription-modal__loading">Loading hotels...</p>
+                      <p>Loading hotels...</p>
                     ) : hotelsError ? (
                       <p className="subscription-modal__error">{hotelsError}</p>
                     ) : hotels.length === 0 ? (
-                      <p className="subscription-modal__info">No hotels found. Please add a hotel first.</p>
+                      <p>No hotels found. Please add a hotel first.</p>
                     ) : (
                       <select
                         id="hotelSelect"
@@ -556,8 +561,7 @@ const Subscription = () => {
                       >
                         <option value="">-- Select Hotel --</option>
                         {hotels
-                          .filter((hotels) => hotels.subscriptions.length === 0)
-
+                          .filter((h) => h.subscriptions.length === 0)
                           .map((hotel) => (
                             <option key={hotel._id} value={hotel._id}>
                               {hotel.name || "Unnamed Hotel"}
@@ -567,28 +571,38 @@ const Subscription = () => {
                     )}
                   </>
                 )}
+
                 {selectedPlan?.planFor === "banquet" && (
                   <>
-                    <label htmlFor="banquetSelect" className="subscription-modal__label">
+                    <label
+                      htmlFor="banquetSelect"
+                      className="subscription-modal__label"
+                    >
                       Select Banquet Hall
                     </label>
                     {banquetsLoading ? (
-                      <p className="subscription-modal__loading">Loading banquet halls...</p>
+                      <p>Loading banquet halls...</p>
                     ) : banquetsError ? (
-                      <p className="subscription-modal__error">{banquetsError}</p>
+                      <p className="subscription-modal__error">
+                        {banquetsError}
+                      </p>
                     ) : banquets.length === 0 ? (
-                      <p className="subscription-modal__info">No banquet halls found. Please add a banquet hall first.</p>
+                      <p>
+                        No banquet halls found. Please add a banquet hall first.
+                      </p>
                     ) : (
                       <select
                         id="banquetSelect"
                         value={selectedBanquet}
                         onChange={(e) => setSelectedBanquet(e.target.value)}
                         className="subscription-modal__select"
-                        disabled={preSelectedType === "Banquet" && preSelectedId}
+                        disabled={
+                          preSelectedType === "Banquet" && preSelectedId
+                        }
                       >
                         <option value="">-- Select Banquet Hall --</option>
                         {banquets
-                          .filter((banquet) => banquet.isAvailable === false)
+                          .filter((b) => b.isAvailable === false)
                           .map((banquet) => (
                             <option key={banquet._id} value={banquet._id}>
                               {banquet.name || "Unnamed Banquet"}
@@ -598,6 +612,7 @@ const Subscription = () => {
                     )}
                   </>
                 )}
+
                 <div className="subscription-modal__coupon-section">
                   <h3 className="subscription-modal__subtitle">Apply Coupon</h3>
                   <div className="subscription-modal__coupon-input">
@@ -615,32 +630,36 @@ const Subscription = () => {
                       whileTap={{ scale: 0.95 }}
                       disabled={couponLoading}
                     >
-                      {couponLoading ? "Applying..." : "Apply Coupon"}
+                      {couponLoading ? "Applying..." : "Apply"}
                     </motion.button>
                   </div>
-                  {couponLoading && (
-                    <p className="subscription-modal__coupon-status">Validating coupon...</p>
-                  )}
                   {couponInfo && (
                     <p className="subscription-modal__coupon-valid">
-                      Coupon "{couponInfo.code}" applied! {couponInfo.discountType === "percentage"
+                      Coupon "{couponInfo.code}" applied! (
+                      {couponInfo.discountType === "percentage"
                         ? `${couponInfo.discountValue}% off`
                         : `₹${couponInfo.discountValue} off`}
+                      )
                     </p>
                   )}
                   {couponError && (
-                    <p className="subscription-modal__coupon-error">{couponError}</p>
+                    <p className="subscription-modal__coupon-error">
+                      {couponError}
+                    </p>
                   )}
                 </div>
+
                 <div className="subscription-modal__price-section">
-                  <p>Original Price: ₹{selectedPlan?.price}</p>
-                  {couponInfo && finalPrice !== selectedPlan?.price && (
-                    <p>Discounted Price: ₹{finalPrice}</p>
+                  <p>Plan Price: ₹{selectedPlan?.price.toFixed(2)}</p>
+                  {couponInfo && finalPrice < selectedPlan?.price && (
+                    <p>After Discount: ₹{finalPrice.toFixed(2)}</p>
                   )}
-                  <p>GST (18%): ₹{gstAmount?.toFixed(2)}</p>
-                  <p><strong>Total Amount: ₹{totalAmount?.toFixed(2)}</strong></p>
+                  <p>
+                    <strong>Total Payable: ₹{totalAmount?.toFixed(2)}</strong>
+                  </p>
                 </div>
               </div>
+
               <div className="subscription-modal__button-group">
                 <motion.button
                   className="subscription-modal__purchase-button"

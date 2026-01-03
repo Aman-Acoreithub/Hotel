@@ -418,9 +418,21 @@ const AddProperty = () => {
         newErrors.latitude = "Latitude is required";
       if (!formData.longitude.trim())
         newErrors.longitude = "Longitude is required";
-      if (!formData.contactNumber.trim())
+      // Contact Number (10 digits)
+      if (!formData.contactNumber.trim()) {
         newErrors.contactNumber = "Contact number is required";
-      if (!formData.email.trim()) newErrors.email = "Email is required";
+      } else if (!/^[6-9]\d{9}$/.test(formData.contactNumber)) {
+        newErrors.contactNumber = "Enter valid 10 digit mobile number";
+      }
+
+      // Email
+      if (!formData.email.trim()) {
+        newErrors.email = "Email is required";
+      } else if (
+        !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(formData.email)
+      ) {
+        newErrors.email = "Enter valid email address";
+      }
 
       if (propertyType === "Hotel" && !formData.registrationNumber.trim()) {
         newErrors.registrationNumber = "Registration number is required";
@@ -447,6 +459,10 @@ const AddProperty = () => {
         if (banquetEvents.length === 0) {
           newErrors.events = "Please add at least one event type";
         }
+
+        if (!formData.images || formData.images.length === 0) {
+          newErrors.images = "Banquet images are required";
+        }
       }
     }
 
@@ -454,49 +470,13 @@ const AddProperty = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  // const handleChange = useCallback(
-  //   (e) => {
-  //     const { name, value, files, type, checked } = e.target;
-
-  //     setFormData((prev) => {
-  //       if (name === "images" || name === "businessLicense") {
-  //         return { ...prev, [name]: files };
-  //       } else if (type === "checkbox") {
-  //         if (
-  //           name === "amenities" ||
-  //           name === "eventTypes" ||
-  //           name === "cateringOptions"
-  //         ) {
-  //           const updatedArray = checked
-  //             ? [...prev[name], value]
-  //             : prev[name].filter((item) => item !== value);
-  //           return { ...prev, [name]: updatedArray };
-  //         } else {
-  //           return { ...prev, [name]: checked };
-  //         }
-  //       } else {
-  //         return { ...prev, [name]: value };
-  //       }
-  //     });
-
-  //     // Clear error when user types
-  //     if (errors[name]) {
-  //       setErrors((prev) => ({ ...prev, [name]: undefined }));
-  //     }
-  //     if (name === "eventTypes")
-  //       setErrors((prev) => ({ ...prev, eventTypes: undefined }));
-  //     if (name === "cateringOptions")
-  //       setErrors((prev) => ({ ...prev, cateringOptions: undefined }));
-  //   },
-  //   [errors]
-  // );
   const handleChange = useCallback(
     (e) => {
       const { name, value, files, type, checked } = e.target;
 
       setFormData((prev) => {
         if (name === "images" || name === "businessLicense") {
-          return { ...prev, [name]: files };
+          return { ...prev, [name]: Array.from(files) };
         }
 
         if (name === "amenities" && type === "checkbox") {
@@ -717,7 +697,7 @@ const AddProperty = () => {
         }
 
         if (formData.images && formData.images.length > 0) {
-          Array.from(formData.images).forEach((file) => {
+          formData.images.forEach((file) => {
             requestData.append("images", file);
           });
         }
@@ -891,33 +871,6 @@ const AddProperty = () => {
     "Elite",
     "Presidential",
   ];
-
-  // const addRoom = () => {
-  //   if (!selectedRoomType) return;
-
-  //   const exists = rooms.some((room) => room.roomType === selectedRoomType);
-  //   if (exists) return;
-
-  //   setRooms([
-  //     ...rooms,
-  //     {
-  //       roomType: selectedRoomType,
-  //       images: [],
-  //     },
-  //   ]);
-
-  //   setSelectedRoomType("");
-  // };
-
-  // const handleImages = (index, files) => {
-  //   const updatedRooms = [...rooms];
-  //   updatedRooms[index].images = Array.from(files);
-  //   setRooms(updatedRooms);
-  // };
-
-  // const removeRoom = (index) => {
-  //   setRooms(rooms.filter((_, i) => i !== index));
-  // };
 
   const renderFormError = (fieldName) => {
     return errors[fieldName] ? (
@@ -1254,9 +1207,14 @@ const AddProperty = () => {
                       type="tel"
                       name="contactNumber"
                       value={formData.contactNumber}
-                      onChange={handleChange}
-                      placeholder="Enter contact number"
+                      maxLength="10"
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, "");
+                        setFormData({ ...formData, contactNumber: value });
+                      }}
+                      placeholder="Enter 10 digit mobile number"
                     />
+
                     {renderFormError("contactNumber")}
                   </div>
                   <div className="form-group">
@@ -1397,80 +1355,83 @@ const AddProperty = () => {
                 <h2>Hotel Capacity & Details</h2>
                 <div className="room-types-wrapper gap-2">
                   <label>Room Types *</label>
+                  {/* {renderFormError("rooms")} */}
+                  <div className="form-section">
+                    {/* Select Room */}
+                    {renderFormError("rooms")}
+                    <div className="flex items-center gap-3 mb-6">
+                      <select
+                        value={selectedHotelRoomType}
+                        onChange={(e) =>
+                          setSelectedHotelRoomType(e.target.value)
+                        }
+                        className="w-1/2 rounded-xl text-[#008b8b] font-semibold border mt-2 border-gray-300 px-4 py-2 text-sm focus:ring-2 focus:ring-teal-500"
+                      >
+                        <option value="">Select room type</option>
+                        {roomTypes.map((type) => (
+                          <option key={type} value={type}>
+                            {type}
+                          </option>
+                        ))}
+                      </select>
 
-                 <div className="form-section">
- 
+                      <div>
+                        <button
+                          type="button"
+                          onClick={addHotelRoom}
+                          className="rounded-xl bg-teal-600 px-6 py-2 text-sm font-semibold text-white hover:bg-teal-700"
+                        >
+                          + Add Room
+                        </button>
+                      </div>
+                    </div>
 
-  {/* Select Room */}
-  <div className="flex items-center gap-3 mb-6">
-    <select
-      value={selectedHotelRoomType}
-      onChange={(e) => setSelectedHotelRoomType(e.target.value)}
-      className="w-1/2 rounded-xl text-[#008b8b] font-semibold border mt-2 border-gray-300 px-4 py-2 text-sm focus:ring-2 focus:ring-teal-500"
-    >
-      <option value="">Select room type</option>
-      {roomTypes.map((type) => (
-        <option key={type} value={type}>
-          {type}
-        </option>
-      ))}
-    </select>
+                    {/* Room Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {hotelRooms.map((room, index) => (
+                        <div
+                          key={index}
+                          className="relative rounded-2xl mb-5 w-70 bg-white shadow-md  transition overflow-hidden"
+                        >
+                          {/* Remove Button */}
+                          <button
+                            type="button"
+                            onClick={() => removeHotelRoom(index)}
+                            className="absolute top-2 right-2 h-8 w-8 rounded-full bg-red-500 text-white font-bold hover:bg-red-600"
+                          >
+                            ×
+                          </button>
 
-    <button
-      type="button"
-      onClick={addHotelRoom}
-      className="rounded-xl bg-teal-600 px-6 py-2 text-sm font-semibold text-white hover:bg-teal-700"
-    >
-      + Add Room
-    </button>
-  </div>
+                          {/* Image Preview */}
+                          <div className="h-30  bg-gray-100 flex items-center justify-center">
+                            {room.images?.length > 0 ? (
+                              <img
+                                src={URL.createObjectURL(room.images[0])}
+                                alt={room.roomType}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <span className="text-gray-400 text-sm">
+                                No Room Image
+                              </span>
+                            )}
+                          </div>
 
-  {/* Room Cards */}
-  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    {hotelRooms.map((room, index) => (
-      <div
-        key={index}
-        className="relative rounded-2xl mb-5 w-70 bg-white shadow-md  transition overflow-hidden"
-      >
-        {/* Remove Button */}
-        <button
-          type="button"
-          onClick={() => removeHotelRoom(index)}
-          className="absolute top-2 right-2 h-8 w-8 rounded-full bg-red-500 text-white font-bold hover:bg-red-600"
-        >
-          ×
-        </button>
+                          {/* Card Content */}
+                          <div className=" text-center">
+                            <h3 className="text-lg font-bold text-gray-800 ">
+                              {room.roomType}
+                            </h3>
 
-        {/* Image Preview */}
-        <div className="h-30  bg-gray-100 flex items-center justify-center">
-          {room.images?.length > 0 ? (
-            <img
-              src={URL.createObjectURL(room.images[0])}
-              alt={room.roomType}
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <span className="text-gray-400 text-sm">
-              No Room Image
-            </span>
-          )}
-        </div>
-
-        {/* Card Content */}
-        <div className=" text-center">
-          <h3 className="text-lg font-bold text-gray-800 ">
-            {room.roomType}
-          </h3>
-
-          <label className="block">
-            <input
-              type="file"
-              multiple
-              accept="image/*"
-              onChange={(e) =>
-                handleHotelImages(index, e.target.files)
-              }
-              className="
+                            <label className="block">
+                              <input
+                                type="file"
+                                multiple
+                                accept="image/*"
+                                onChange={(e) =>
+                                  handleHotelImages(index, e.target.files)
+                                }
+                                className="
                 w-full  rounded-lg border border-gray-300
                 bg-white  text-sm text-gray-600
                 file:mr-3 file:rounded-lg file:border-0
@@ -1478,28 +1439,26 @@ const AddProperty = () => {
                 file:text-sm file:font-semibold file:text-white
                 hover:file:bg-teal-700
               "
-            />
-          </label>
+                              />
+                            </label>
 
-          {room.images?.length > 0 && (
-            <p className="mb-2 text-xs text-gray-500">
-              {room.images.length} image(s) selected
-            </p>
-          )}
-        </div>
-      </div>
-    ))}
-  </div>
-</div>
-
-
-
+                            {room.images?.length > 0 && (
+                              <p className="mb-2 text-xs text-gray-500">
+                                {room.images.length} image(s) selected
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
 
                 <div className="form-section">
                   {/* <h2>Upload Documents & Images</h2> */}
                   <div className="form-group">
                     <label>Property Images</label>
+                    {renderFormError("images")}
                     <input
                       type="file"
                       name="images"
@@ -1719,8 +1678,8 @@ const AddProperty = () => {
                     <h2 className="text-2xl font-bold text-gray-800 mb-4">
                       Banquet Event Types
                     </h2>
-
                     {/* Select Event */}
+                    {renderFormError("events")}
                     <div className="flex items-center gap-3 mb-6">
                       <select
                         value={selectedEventType}
@@ -1816,6 +1775,8 @@ const AddProperty = () => {
                   {/* <h2>Upload Documents & Images</h2> */}
                   <div className="form-group">
                     <label className="text-lg">Banquet Images</label>
+                    {renderFormError("images")}
+
                     <input
                       type="file"
                       name="images" // ✅ THIS LINE WAS MISSING
@@ -1974,7 +1935,7 @@ const AddProperty = () => {
                         </div> */}
                         </>
                       )}
-                     
+
                       {/* <div>
                       <strong
                         style={{

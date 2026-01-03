@@ -1437,9 +1437,9 @@ const Reels = () => {
               <FaHotel />&nbsp; Hotels
             </h2>
           </Link>
-          <Link style={{ textDecoration: "none", color: "white" }} to="/rooms">
+          <Link style={{ textDecoration: "none", color: "white" }} to="/Chat">
             <h2 className="toggle-headings-name">
-              <MdMeetingRoom /> &nbsp; Rooms
+              <MdMeetingRoom /> &nbsp; ChatPanel
             </h2>
           </Link>
           <Link style={{ textDecoration: "none", color: "white" }} to="/userprofile">

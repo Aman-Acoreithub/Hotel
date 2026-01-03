@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { showSuccess, showError, showInfo, showWarning } from "../utils/Toast";
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faHeart, faComment, faUser } from '@fortawesome/free-solid-svg-icons';
-import { motion, AnimatePresence } from 'framer-motion';
-import './Dashboard.css';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faHeart, faComment, faUser } from "@fortawesome/free-solid-svg-icons";
+import { motion, AnimatePresence } from "framer-motion";
+import axios from "axios";
+import "./Dashboard.css";
 
-const API_BASE = 'https://hotel-banquet.nearprop.in';
+const API_BASE = "https://hotel-banquet.nearprop.in";
 
 const SkeletonCard = () => (
   <div className="skeleton-card">
@@ -24,7 +25,6 @@ const SkeletonCard = () => (
 );
 
 const Dashboard = () => {
-
   const [searchParams, setSearchParams] = useSearchParams();
   const initialTab = searchParams.get("tab") || "hotels";
   const [activeSection, setActiveSection] = useState(initialTab);
@@ -38,21 +38,20 @@ const Dashboard = () => {
   const handleTabChange = (tab) => {
     setActiveSection(tab);
     setSearchParams({ tab });
-  }
+  };
 
   // Fetch Hotels & Banquet Halls
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       setError(null);
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       if (!token) {
-        console.log("Token not found");  // Check if this log appears
-        setError('No authorization token found. Please login.');
+        console.log("Token not found"); // Check if this log appears
+        setError("No authorization token found. Please login.");
         setLoading(false);
-        return
+        return;
       }
-
 
       try {
         // Hotels
@@ -61,7 +60,7 @@ const Dashboard = () => {
         });
         const hotelsJson = await hotelsRes.json();
 
-        console.log(hotelsJson.data.hotels)
+        console.log(hotelsJson.data.hotels);
         if (hotelsJson.success) {
           setHotelsData(hotelsJson.data.hotels || []);
         }
@@ -76,7 +75,7 @@ const Dashboard = () => {
         }
         return hotelsJson;
       } catch (err) {
-        setError('Failed to fetch data.');
+        setError("Failed to fetch data.");
       } finally {
         setLoading(false);
       }
@@ -100,12 +99,52 @@ const Dashboard = () => {
       navigate(from, { state: { id, type, from } });
     }
   };
+ 
+
+const deleteProperty = async (e, id, type) => {
+  e.stopPropagation();
+
+  console.log("DELETE →", { id, type }); // 👈 CHECK THIS
+
+  if (!type) {
+    showError("Type is missing");
+    return;
+  }
+
+  const token = localStorage.getItem("token");
+  if (!token) {
+    showError("Login required");
+    return;
+  }
+
+  
+
+  try {
+    const url =
+      type === "Hotel"
+        ? `${API_BASE}/api/hotels/${id}`
+        : `${API_BASE}/api/banquet-halls/${id}`;
+
+    await axios.delete(url, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    showSuccess(`${type} deleted successfully`);
+
+    if (type === "Hotel") {
+      setHotelsData((prev) => prev.filter((h) => h.hotelId !== id));
+    } else {
+      setBanquetHallsData((prev) =>
+        prev.filter((b) => b.banquetHallId !== id)
+      );
+    }
+  } catch (err) {
+    showError("Delete failed");
+  }
+};
 
 
-  // Example button
-  {/* <button onClick={(e) => handlePropertyClick(e, propertyId, "Hotel")}>Hotel</button> */ }
-
-  const dataToShow = activeSection === 'hotels' ? hotelsData : banquetHallsData;
+  const dataToShow = activeSection === "hotels" ? hotelsData : banquetHallsData;
 
   if (loading) {
     return (
@@ -122,16 +161,16 @@ const Dashboard = () => {
   }
   return (
     <>
-
-      <div className='my-title'> My hotels & Banquet</div>
+      <div className="my-title"> My hotels & Banquet</div>
       <div className="dashboard-container">
         <div className="content-wrapper">
-
           <div className="main-content">
             <div className="tabs-container">
               <motion.button
-                className={`tab-btn ${activeSection === 'hotels' ? 'active' : ''}`}
-                onClick={() => handleTabChange('hotels')}
+                className={`tab-btn ${
+                  activeSection === "hotels" ? "active" : ""
+                }`}
+                onClick={() => handleTabChange("hotels")}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
               >
@@ -139,9 +178,10 @@ const Dashboard = () => {
               </motion.button>
 
               <motion.button
-                className={`tab-btn ${activeSection === 'banquets' ? 'active' : ''}`}
-                onClick={() => handleTabChange('banquets')}
-
+                className={`tab-btn ${
+                  activeSection === "banquets" ? "active" : ""
+                }`}
+                onClick={() => handleTabChange("banquets")}
               >
                 Banquet Halls
               </motion.button>
@@ -157,7 +197,8 @@ const Dashboard = () => {
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                 >
-                  No {activeSection === 'hotels' ? 'Hotels' : 'Banquet Halls'} found.
+                  No {activeSection === "hotels" ? "Hotels" : "Banquet Halls"}{" "}
+                  found.
                 </motion.p>
               ) : (
                 <motion.div
@@ -169,9 +210,11 @@ const Dashboard = () => {
                   transition={{ duration: 0.5 }}
                 >
                   {dataToShow.map((item) => {
-                    const isHotel = activeSection === 'hotels';
-                    const propertyType = isHotel ? 'Hotel' : 'Banquet';
-                    const propertyId = isHotel ? item.hotelId : item.banquetHallId;
+                    const isHotel = activeSection === "hotels";
+                    const propertyType = isHotel ? "Hotel" : "Banquet";
+                    const propertyId = isHotel
+                      ? item.hotelId
+                      : item.banquetHallId;
                     return (
                       <motion.div
                         key={item._id}
@@ -179,8 +222,10 @@ const Dashboard = () => {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.3 }}
-                        onClick={(e) => handlePropertyClick(e, propertyId, propertyType)}
-                      // onClick={(e) => handlePropertyClick(e, propertyId, "Banquet")}
+                        onClick={(e) =>
+                          handlePropertyClick(e, propertyId, propertyType)
+                        }
+                        // onClick={(e) => handlePropertyClick(e, propertyId, "Banquet")}
                       >
                         <div className="property-card">
                           <div className="property-image-container">
@@ -195,45 +240,57 @@ const Dashboard = () => {
                               <div className="no-image">No Image</div>
                             )}
                             <div className="overlay-icons">
-
-
                               <h3
                                 style={{
-                                  backgroundColor: item.subscriptions && item.subscriptions.length > 0 ? "blue" : "red",
+                                  backgroundColor:
+                                    item.subscriptions &&
+                                    item.subscriptions.length > 0
+                                      ? "blue"
+                                      : "red",
                                   color: "white",
-                                  fontSize : "12px",
-                                  fontFamily : "revert-layer",
-                                  padding : "5px",
-                                  borderRadius : "8px"
+                                  fontSize: "12px",
+                                  fontFamily: "revert-layer",
+                                  padding: "5px",
+                                  borderRadius: "8px",
                                 }}
                               >
-                                {item.subscriptions && item.subscriptions.length > 0
+                                {item.subscriptions &&
+                                item.subscriptions.length > 0
                                   ? "Subscribed ✅"
-                                  : "Pending ⏳"}
+                                  : "Pending subscriptions ⏳"}
                               </h3>
-
                             </div>
-                            {/* <span className="status-badge">{ item.isAvailable ? item.status.toUpperCase() :  "Pending"}</span> */}
+                            {/* <span className="verificationStatus-badge">{ item.isAvailable ? item.verificationStatus.toUpperCase() :  "Pending"}</span> */}
                           </div>
                           <div className="property-info">
                             <h3 className="property-name"> 🏨 {item.name}</h3>
                             <p className="property-location">
                               {item.city}, {item.state}
                             </p>
-                            <p className="property-description"> 💬{item.description}</p>
-                            {isHotel ? (
-                              <div className="property-footer">
-                                <span> Created:  {new Date(item.createdAt).toLocaleDateString()}</span>
-                                <span>
-                                  <FontAwesomeIcon icon={faUser} /> Owner
-                                </span>
-                              </div>
-                            ) : (
-                              <div className="property-footer">
-                                <span>Capacity: {item.capacity}</span>
-                                <span>Price/Event: ₹{item.seasonalPrice.summer}</span>
-                              </div>
-                            )}
+                            <p className="property-description">
+                              {" "}
+                              💬{item.description}
+                            </p>
+                           
+                            <div className="flex items-center justify-between px-5 py-3 mt-3 border-t border-gray-200 bg-gray-50 rounded-b-xl">
+                              {/* Edit Button */}
+                              <button
+                                className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-blue-600 
+               bg-blue-50 border border-blue-200 rounded-lg 
+               hover:bg-blue-600 hover:text-white transition-all duration-200"
+                              >
+                                ✏️ Edit
+                              </button>
+
+                              {/* Delete Button */}
+                              <button onClick={(e) => deleteProperty(e, propertyId, propertyType)}
+                                className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-red-600 
+               bg-red-50 border border-red-200 rounded-lg 
+               hover:bg-red-600 hover:text-white transition-all duration-200"
+                              >
+                                🗑️ Delete
+                              </button>
+                            </div>
                           </div>
                         </div>
                       </motion.div>
@@ -245,11 +302,7 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
-
-
-
     </>
-
   );
 };
 
