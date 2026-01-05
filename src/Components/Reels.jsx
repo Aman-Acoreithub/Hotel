@@ -1034,6 +1034,7 @@ import "./Reels.css";
 import nearprop from "../assets/nearproplogo.png";
 import { Link } from "react-router-dom";
 import { FaWhatsapp } from "react-icons/fa";
+import { toast } from "react-toastify";
 
 const Reels = () => {
   const [reels, setReels] = useState([]);
@@ -1369,7 +1370,7 @@ const Reels = () => {
 
       setMessage(`✅ Uploaded successfully: ${res.data.message || "Reel added!"}`);
       setShowPopup(false);
-      alert("Reel uploaded");
+      toast.success("Reel uploaded");
       setTitle("");
       setVideo(null);
       setHotelId("");
@@ -1387,7 +1388,7 @@ const Reels = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       setMyReels((prev) => prev.filter((reel) => reel._id !== id));
-      alert("Reel deleted successfully");
+      toast.success("Reel deleted successfully");
       window.location.reload();
     } catch (error) {
       console.error("❌ Error deleting reel:", error.response?.data || error.message);

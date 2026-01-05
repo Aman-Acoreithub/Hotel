@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./updateroom.css";
+import { toast } from "react-toastify";
 
 const UpdateRoom = () => {
   const { id } = useParams();
@@ -49,7 +50,7 @@ const UpdateRoom = () => {
         localStorage.setItem("hotelId", roomData.hotelId || "");
       } catch (err) {
         console.error("Error fetching room details:", err);
-        alert("Failed to load room details");
+        toast.error("Failed to load room details");
       } finally {
         setLoading(false);
       }
@@ -58,7 +59,7 @@ const UpdateRoom = () => {
     if (token) {
       fetchRoom();
     } else {
-      alert("No token found. Please login again.");
+      toast.error("No token found. Please login again.");
       navigate("/login");
     }
   }, [id, token, navigate]);
@@ -98,7 +99,7 @@ const UpdateRoom = () => {
     e.preventDefault();
 
     if (!formData.hotelId) {
-      alert("Hotel ID is missing.");
+      toast.error("Hotel ID is missing.");
       return;
     }
 
@@ -142,12 +143,12 @@ const UpdateRoom = () => {
         }
       );
 
-      alert("✅ Room updated successfully!");
+      toast.success("✅ Room updated successfully!");
       console.log("✅ Response:", res.data);
       navigate(`/rooms/${id}`);
     } catch (error) {
       console.error("❌ Error updating room:", error.response?.data || error);
-      alert("Failed to update room.");
+      toast.error("Failed to update room.");
     } finally {
       setLoading(false);
     }

@@ -79,19 +79,20 @@ const HotelDetails = () => {
 
   const calculateGracePeriodTimeLeft = useCallback(
     (createdAt, activeAt, verifiedAt) => {
-      const start = verifiedAt || activeAt || createdAt;
-      if (!start) return null;
+      const start =
+        verifiedAt || activeAt || createdAt || new Date().toISOString();
 
       const startTime = new Date(start).getTime();
-      const currentTime = Date.now();
-      const elapsedTime = currentTime - startTime;
-      const timeRemaining = SUBSCRIPTION_GRACE_PERIOD - elapsedTime;
+      if (isNaN(startTime)) return null;
 
-      if (timeRemaining <= 0) {
+      const now = Date.now();
+      const remaining = SUBSCRIPTION_GRACE_PERIOD - (now - startTime);
+
+      if (remaining <= 0) {
         return { expired: true, totalSeconds: 0 };
       }
 
-      const totalSeconds = Math.floor(timeRemaining / 1000);
+      const totalSeconds = Math.floor(remaining / 1000);
 
       return {
         expired: false,
@@ -99,11 +100,7 @@ const HotelDetails = () => {
         hours: Math.floor(totalSeconds / 3600),
         minutes: Math.floor((totalSeconds % 3600) / 60),
         seconds: totalSeconds % 60,
-        percentage: Math.max(
-          0,
-          Math.min(100, (timeRemaining / SUBSCRIPTION_GRACE_PERIOD) * 100)
-        ),
-        startTime: new Date(startTime).toLocaleString(),
+        percentage: (remaining / SUBSCRIPTION_GRACE_PERIOD) * 100,
       };
     },
     []
@@ -205,14 +202,17 @@ const HotelDetails = () => {
           setSubscriptionDaysLeft(null);
         }
 
-        if (hotelData.verificationStatus === "Verified") {
+        if (
+          hotelData.verificationStatus === "verified" &&
+          !hasActiveSubscription
+        ) {
           const timeData = calculateGracePeriodTimeLeft(
             hotelData.createdAt,
             hotelData.activeAt,
             hotelData.verifiedAt
           );
           setTimeLeft(timeData);
-          setWillAutoDelete(!!timeData && !timeData.expired);
+          setWillAutoDelete(true);
         } else {
           setTimeLeft(null);
           setWillAutoDelete(false);
@@ -239,7 +239,7 @@ const HotelDetails = () => {
         }
 
         if (
-          banquetData.verificationStatus === "Verified" &&
+          banquetData.verificationStatus === "verified" &&
           !hasActiveSubscription
         ) {
           const timeData = calculateGracePeriodTimeLeft(
@@ -248,7 +248,7 @@ const HotelDetails = () => {
             banquetData.verifiedAt
           );
           setTimeLeft(timeData);
-          setWillAutoDelete(timeData && !timeData.expired);
+          setWillAutoDelete(true);
         } else {
           setTimeLeft(null);
           setWillAutoDelete(false);
@@ -265,17 +265,12 @@ const HotelDetails = () => {
 
   useEffect(() => {
     const data = type === "Hotel" ? property : banquet;
-
-    if (
-      !data ||
-      data.verificationStatus !== "Verified" ||
-      hasActiveSub ||
-      !timeLeft ||
-      timeLeft.expired ||
-      !willAutoDelete
-    ) {
-      return;
-    }
+    console.log({
+      verified: data?.verificationStatus,
+      hasActiveSub,
+      timeLeft,
+    });
+    if (!data || data.verificationStatus !== "verified" || hasActiveSub) return;
 
     const timer = setInterval(() => {
       const newTimeLeft = calculateGracePeriodTimeLeft(
@@ -283,6 +278,7 @@ const HotelDetails = () => {
         data.activeAt,
         data.verifiedAt
       );
+
       setTimeLeft(newTimeLeft);
 
       if (newTimeLeft?.expired) {
@@ -293,8 +289,6 @@ const HotelDetails = () => {
 
     return () => clearInterval(timer);
   }, [
-    timeLeft,
-    willAutoDelete,
     property,
     banquet,
     type,
@@ -480,7 +474,7 @@ const HotelDetails = () => {
     ? data.amenities
     : data.amenities?.slice(0, 6) || [];
   const startingPrice = getStartingPrice();
-  const isActive = data.verificationStatus === "Verified";
+  const isActive = data.verificationStatus === "verified";
   const isPending = data.verificationStatus === "pending";
 
   const formatTimeLeft = () => {
@@ -529,7 +523,9 @@ const HotelDetails = () => {
   const statusBadge = getStatusBadge(data.verificationStatus);
 
   const shouldShowTimer =
-    isActive && !hasActiveSub && timeLeft && !timeLeft.expired;
+    data?.verificationStatus === "verified" &&
+    !hasActiveSub &&
+    timeLeft?.totalSeconds > 0;
 
   if (timeLeft?.expired && isActive && !hasActiveSub) {
     return (
@@ -951,7 +947,7 @@ const HotelDetails = () => {
                   <div>
                     <h3
                       className={`text-xl font-bold ${
-                        shouldShowTimer ? "text-red-100" : "text-blue-800"
+                        shouldShowTimer ? "text-red-700" : "text-blue-800"
                       }`}
                     >
                       {shouldShowTimer
@@ -1018,22 +1014,13 @@ const HotelDetails = () => {
             </div>
           )}
         </div>
-        {/* {type === "Hotel" && (
+        {type === "Hotel" && (
           <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-gray-900">
                 Room Types ({property?.rooms?.length || 0})
               </h2>
-              <button
-                onClick={() =>
-                  navigate(`/update/hotel/${HotelAndBanquetDetailsId}`, {
-                    state: { openTab: "rooms" },
-                  })
-                }
-                className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2"
-              >
-                Add Room
-              </button>
+            
             </div>
 
             {(() => {
@@ -1069,59 +1056,81 @@ const HotelDetails = () => {
                 );
               } else {
                 return (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {rooms.map((room, index) => {
-                      const roomName = room.roomType || `Room ${index + 1}`;
-                      const roomImage =
-                        room.images && room.images.length > 0
-                          ? room.images[0]
-                          : DefaultImage;
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+  {property?.rooms?.map((room, index) => {
+    const roomName = room.roomType || `Room ${index + 1}`;
+    const roomImage = room.images?.[0] || DefaultImage;
+    const price = room.price ? `₹${room.price}` : 'Price on request';
+    const capacity = room.capacity || 'N/A';
+    const amenities = room.amenities?.slice(0, 3) || [];
 
-                      return (
-                        <div
-                          key={room._id || index}
-                          className="border rounded-xl overflow-hidden shadow hover:shadow-xl transition"
-                        >
-                          <img
-                            src={roomImage}
-                            alt={roomName}
-                            className="h-48 w-full object-cover"
-                            onError={(e) =>
-                              (e.currentTarget.src = DefaultImage)
-                            }
-                          />
-                          <div className="p-4">
-                            <h3 className="font-bold text-lg text-gray-800 mb-2">
-                              {roomName}
-                            </h3>
-                            {room.price && (
-                              <p className="text-green-600 font-semibold">
-                                ₹{room.price}
-                              </p>
-                            )}
-                            {room.capacity && (
-                              <p className="text-gray-600 text-sm">
-                                Capacity: {room.capacity} persons
-                              </p>
-                            )}
-                            {room.description && (
-                              <p className="text-gray-600 text-sm mt-2">
-                                {room.description}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+    return (
+      <div
+        key={room._id || index}
+        className="group relative bg-white rounded-2xl shadow-lg hover:shadow-2xl overflow-hidden transition-all duration-500 transform hover:-translate-y-2"
+      >
+        {/* Image Container with Overlay */}
+        <div className="relative h-56 overflow-hidden">
+          <img
+            src={roomImage}
+            alt={roomName}
+            className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
+            onError={(e) => (e.currentTarget.src = DefaultImage)}
+          />
+          
+          {/* Gradient Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
+          
+          {/* Room Type Badge */}
+          <div className="absolute top-4 left-4">
+            <span className="bg-gradient-to-r from-blue-600 to-teal-500 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg">
+              {roomName}
+            </span>
+          </div>
+          
+          {/* Hover Indicator */}
+          <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 animate-pulse">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        {/* Content Area */}
+        <div className="p-6">
+          {/* Title with Icon */}
+          <div className="flex items-center ">
+            <div className="p-2 bg-gradient-to-r from-blue-100 to-teal-100 rounded-lg mr-3">
+              <FontAwesomeIcon icon={faBed} className="text-blue-600 text-lg" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 group-hover:text-blue-700 transition-colors">
+              {roomName}
+            </h3>
+          </div>
+
+        
+
+        </div>
+
+        {/* Decorative Corner */}
+        <div className="absolute top-0 right-0 w-16 h-16 overflow-hidden">
+          <div className="absolute transform rotate-45 bg-gradient-to-r from-blue-500 to-teal-500 text-white text-xs font-bold py-1 w-24 text-center -right-8 top-4">
+            Room
+          </div>
+        </div>
+      </div>
+    );
+  })}
+</div>
                 );
               }
             })()}
           </div>
-        )} */}
-       
-      
-        {/* Event Types Section (Banquet) - FIXED: Images handling */}
+        )}
+
+        {/* Event Types Section (Banquet) - FIXED */}
         {type === "Banquet" && banquet?.events && banquet.events.length > 0 && (
           <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
             <div className="flex items-center justify-between mb-6">
@@ -1139,31 +1148,105 @@ const HotelDetails = () => {
                 + Add Event
               </button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {banquet.events.map((event, index) => {
                 const eventName = event.eventType || `Event ${index + 1}`;
-                const eventImage = event.images && event.images.length > 0;
-                event.images[0];
+                const eventImage =
+                  event.images && event.images.length > 0
+                    ? event.images[0]
+                    : DefaultImage;
+
                 return (
                   <div
                     key={event._id || index}
-                    className="border rounded-xl overflow-hidden shadow hover:shadow-md transition"
+                    className="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2"
                   >
-                    <img
-                      src={eventImage}
-                      alt={eventName}
-                      className="h-48 w-full object-cover"
-                      onError={(e) => (e.currentTarget.src = DefaultImage)}
-                    />
-                    <div className="p-4">
-                      <h3 className="font-bold text-lg text-gray-800 text-center">
-                        {eventName}
-                      </h3>
+                    {/* Image Container with Gradient Overlay */}
+                    <div className="relative h-64 overflow-hidden">
+                      <img
+                        src={eventImage}
+                        alt={eventName}
+                        className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
+                        onError={(e) => {
+                          e.currentTarget.src = DefaultImage;
+                        }}
+                      />
+                      {/* Gradient Overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
+
+                      {/* Event Type Badge */}
+                      <div className="absolute top-4 left-4">
+                        <span className="bg-gradient-to-r from-purple-600 to-pink-500 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg">
+                          {eventName}
+                        </span>
+                      </div>
+
+                      {/* View More Indicator */}
+                      <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <div className="bg-white/20 backdrop-blur-sm rounded-full p-2">
+                         
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Content Area */}
+                    <div className="bg-white p-6">
+                      {/* Title with Icon */}
+                      <div className="flex items-center mb-4">
+                        <div className="p-2 bg-gradient-to-r from-blue-100 to-purple-100 rounded-lg mr-3">
+                          <svg
+                            className="w-5 h-5 text-purple-600"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"
+                              clipRule="evenodd"
+                            ></path>
+                          </svg>
+                        </div>
+                        <h3 className="text-xl font-bold text-gray-900 group-hover:text-purple-700 transition-colors">
+                          {eventName} Event
+                        </h3>
+                      </div>
+
+                      {/* Description */}
                       {event.description && (
-                        <p className="text-gray-600 text-sm mt-2 text-center">
+                        <p className="text-gray-600 mb-6 line-clamp-3">
                           {event.description}
                         </p>
                       )}
+
+                      {/* Date/Time Info */}
+                      {event.createdAt && (
+                        <div className="flex items-center text-gray-500 text-sm mb-4">
+                          <svg
+                            className="w-4 h-4 mr-2"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
+                              clipRule="evenodd"
+                            ></path>
+                          </svg>
+                          <span>
+                            Added:{" "}
+                            {new Date(event.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Decorative Corner */}
+                    <div className="absolute top-0 right-0 w-16 h-16 overflow-hidden">
+                      <div className="absolute transform rotate-45 bg-gradient-to-r from-blue-500 to-purple-600 text-white text-xs font-bold py-1 w-24 text-center -right-8 top-4">
+                        Event
+                      </div>
                     </div>
                   </div>
                 );
@@ -1347,148 +1430,230 @@ const HotelDetails = () => {
             />
           </div>
         </div>
-        {/* Footer Action Buttons */}
-        <div className="sticky bottom-0 bg-white border-t py-4 mt-8 z-40">
-          <div className="container mx-auto px-4">
-            <div className="flex flex-col sm:flex-row justify-between items-center space-y-3 sm:space-y-0">
-              <div className="text-lg font-bold text-gray-900">
-                {type === "Hotel" ? "" : "Plan Your Event"}
-              </div>
-              <div className="flex flex-wrap justify-center gap-3">
-                {hasActiveSub ? (
-                  <>
-                    <button className="px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors flex items-center">
-                      <FontAwesomeIcon icon={faPhone} className="mr-2" /> Call
-                      Now
-                    </button>
-                    <button className="px-5 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-colors flex items-center">
-                      <FontAwesomeIcon icon={faEnvelope} className="mr-2" />{" "}
-                      WhatsApp
-                    </button>
-                    <Link to={"/Chat"}>
-                      <button className="px-5 py-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition-colors">
-                        Help
-                      </button>
-                    </Link>
-                  </>
-                ) : (
-                  <>
-                    <button
-                      onClick={navigateToSubscription}
-                      className={`px-5 py-3 font-semibold rounded-lg transition-colors flex items-center ${
-                        shouldShowTimer
-                          ? "bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white"
-                          : isPending
-                          ? "bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-600 hover:to-amber-600 text-white"
-                          : "bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white"
-                      }`}
-                    >
-                      <FontAwesomeIcon icon={faShoppingCart} className="mr-2" />
-                      {shouldShowTimer
-                        ? "Buy Now - Save Property!"
-                        : isPending
-                        ? "Activate First"
-                        : "Buy Subscription"}
-                    </button>
-                    <Link to={"/Chat"}>
-                      <button
-                        className={`px-5 py-3 rounded-lg transition-colors flex items-center ${
-                          shouldShowTimer
-                            ? "bg-gray-400 text-gray-600 cursor-not-allowed"
-                            : "bg-gray-600 hover:bg-gray-700 text-white"
-                        }`}
-                        disabled={shouldShowTimer}
-                      >
-                        <FontAwesomeIcon
-                          icon={faQuestionCircle}
-                          className="mr-2"
-                        />{" "}
-                        Help
-                      </button>
-                    </Link>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Subscription Details Modal */}
       {showSubscriptionModal && data.subscriptions?.length > 0 && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-2xl font-bold text-gray-900">
-                  Subscription Details
-                </h3>
-                <button
-                  onClick={() => setShowSubscriptionModal(false)}
-                  className="text-gray-500 hover:text-gray-700 text-2xl"
-                >
-                  &times;
-                </button>
-              </div>
-              <div className="space-y-4">
-                {data.subscriptions.map((sub) => (
-                  <div key={sub._id} className="border rounded-xl p-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <div className="text-sm text-gray-500">Plan Name</div>
-                        <div className="font-semibold">
-                          {sub.planId?.name || "N/A"}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-sm text-gray-500">Type</div>
-                        <div className="font-semibold">
-                          {sub.planId?.planType || "N/A"}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-sm text-gray-500">Validity</div>
-                        <div className="font-semibold">
-                          {new Date(sub.startDate).toLocaleDateString()} -{" "}
-                          {new Date(sub.endDate).toLocaleDateString()}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-sm text-gray-500">Amount</div>
-                        <div className="font-semibold text-blue-600">
-                          ₹{sub.finalPrice || "0"}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="mt-4 pt-4 border-t">
-                      <span
-                        className={`px-3 py-1 rounded-full text-sm font-medium ${
-                          sub.isActive && new Date(sub.endDate) > new Date()
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
-                        }`}
-                      >
-                        {sub.isActive && new Date(sub.endDate) > new Date()
-                          ? "Active"
-                          : "Expired"}
-                      </span>
-                    </div>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
+          <div className="relative bg-gradient-to-br from-white to-gray-50 rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden border border-gray-200">
+            {/* Decorative elements */}
+            <div className="absolute -top-24 -right-24 w-64 h-64 bg-gradient-to-r from-blue-100 to-purple-100 rounded-full opacity-50"></div>
+            <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-gradient-to-r from-green-100 to-cyan-100 rounded-full opacity-50"></div>
+
+            <div className="relative p-8">
+              {/* Header with icon */}
+              <div className="flex justify-between items-center mb-8">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl shadow-lg">
+                    <svg
+                      className="w-8 h-8 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                      ></path>
+                    </svg>
                   </div>
-                ))}
-              </div>
-              <div className="mt-6 flex justify-end gap-3">
+                  <div>
+                    <h3 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                      Subscription Details
+                    </h3>
+                    <p className="text-gray-500 mt-1">
+                      Manage your current plans
+                    </p>
+                  </div>
+                </div>
                 <button
                   onClick={() => setShowSubscriptionModal(false)}
-                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                  className="p-2 hover:bg-gray-100 rounded-full transition-all duration-200 hover:scale-110"
                 >
-                  Close
+                  <svg
+                    className="w-6 h-6 text-gray-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M6 18L18 6M6 6l12 12"
+                    ></path>
+                  </svg>
                 </button>
-                <button
-                  onClick={navigateToSubscription}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                >
-                  Upgrade Plan
-                </button>
+              </div>
+
+              {/* Subscription Cards */}
+              <div className="space-y-6 mb-8">
+                {data.subscriptions.map((sub, index) => {
+                  const isActive =
+                    sub.isActive && new Date(sub.endDate) > new Date();
+                  return (
+                    <div
+                      key={sub._id}
+                      className="relative group transform transition-all duration-300 hover:scale-[1.02]"
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                      <div className="relative border-2 border-gray-100 rounded-2xl p-6 bg-white shadow-lg hover:shadow-xl transition-shadow duration-300">
+                        {/* Status ribbon */}
+                        <div
+                          className={`absolute -top-3 -right-3 px-4 py-1.5 rounded-full shadow-lg transform rotate-3 ${
+                            isActive
+                              ? "bg-gradient-to-r from-green-400 to-emerald-500 text-white"
+                              : "bg-gradient-to-r from-gray-400 to-gray-500 text-white"
+                          }`}
+                        >
+                          <span className="font-bold text-sm">
+                            {isActive ? "🌟 ACTIVE" : "⏰ EXPIRED"}
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                          {/* Plan Info */}
+                          <div className="space-y-2">
+                            <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                              Plan Name
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="font-bold text-lg text-gray-900">
+                                {sub.planId?.name || "Basic Plan"}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Plan Type */}
+                          <div className="space-y-2">
+                            <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                              Type
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="font-semibold text-gray-800">
+                                {sub.planId?.planType || "Monthly"}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Validity */}
+                          <div className="space-y-2">
+                            <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                              Validity
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="font-semibold">
+                                <div className="text-gray-900">
+                                  {new Date(sub.startDate).toLocaleDateString()}
+                                </div>
+                                <div className="text-sm text-gray-600">
+                                  to{" "}
+                                  {new Date(sub.endDate).toLocaleDateString()}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Price */}
+                          <div className="space-y-2">
+                            <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                              Amount
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="font-bold text-2xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                                ₹{sub.finalPrice || "0"}
+                                <span className="text-sm font-normal text-gray-500 block">
+                                  total
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Progress bar for active subscriptions */}
+                        {isActive && (
+                          <div className="mt-6 pt-6 border-t border-gray-100">
+                            <div className="flex justify-between text-sm text-gray-600 mb-2">
+                              <span>Time remaining</span>
+                              <span className="font-semibold">
+                                {Math.ceil(
+                                  (new Date(sub.endDate) - new Date()) /
+                                    (1000 * 60 * 60 * 24)
+                                )}{" "}
+                                days
+                              </span>
+                            </div>
+                            <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-gradient-to-r from-green-400 to-emerald-500 rounded-full transition-all duration-1000"
+                                style={{
+                                  width: `${Math.min(
+                                    100,
+                                    ((new Date() - new Date(sub.startDate)) /
+                                      (new Date(sub.endDate) -
+                                        new Date(sub.startDate))) *
+                                      100
+                                  )}%`,
+                                }}
+                              ></div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-6 border-t border-gray-200">
+                <div className="text-sm text-gray-600 flex items-center gap-2">
+                  <svg
+                    className="w-5 h-5 text-blue-500"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                      clipRule="evenodd"
+                    ></path>
+                  </svg>
+                  Need help? Contact our support team
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowSubscriptionModal(false)}
+                    className="px-6 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 transform hover:-translate-y-0.5"
+                  >
+                    Close
+                  </button>
+                  <button
+                    onClick={navigateToSubscription}
+                    className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 transform hover:-translate-y-0.5 flex items-center gap-2"
+                  >
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M13 10V3L4 14h7v7l9-11h-7z"
+                      ></path>
+                    </svg>
+                    Upgrade Plan
+                  </button>
+                </div>
               </div>
             </div>
           </div>

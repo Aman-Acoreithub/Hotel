@@ -19,7 +19,7 @@ const Subscription = () => {
   const [couponCode, setCouponCode] = useState("");
   const [couponInfo, setCouponInfo] = useState(null);
   const [finalPrice, setFinalPrice] = useState(null);
-  const [totalAmount, setTotalAmount] = useState(null);
+  const [totalAmount, setTotalAmount] = useState(0);
   const [selectedHotel, setSelectedHotel] = useState("");
   const [selectedBanquet, setSelectedBanquet] = useState("");
   const [loading, setLoading] = useState(false);
@@ -35,6 +35,9 @@ const Subscription = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
   const [authorizedAmount, setAuthorizedAmount] = useState(null);
+  const [userSubscriptionStatus, setUserSubscriptionStatus] = useState(null);
+  const [statusLoading, setStatusLoading] = useState(false);
+  const [statusError, setStatusError] = useState(null);
 
   const location = useLocation();
   const { id: preSelectedId, type: preSelectedType } = location.state || {};
@@ -132,6 +135,40 @@ const Subscription = () => {
     };
     fetchAllData();
   }, [isAuthenticated]);
+  //  add plan purches api
+  // New API: Fetch user's current subscription status
+  const fetchUserSubscriptionStatus = async () => {
+    setStatusLoading(true);
+    setStatusError(null);
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setStatusError("Authentication token not found");
+        return;
+      }
+
+      const res = await axios.get(
+        "https://hotel-banquet.nearprop.in/api/subscriptions/user-status",
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (res.data.success) {
+        setUserSubscriptionStatus(res.data.data);
+      } else {
+        setStatusError(
+          res.data.message || "Failed to fetch subscription status"
+        );
+      }
+    } catch (err) {
+      setStatusError(
+        err.response?.data?.message || "Error fetching subscription status"
+      );
+    } finally {
+      setStatusLoading(false);
+    }
+  };
 
   // Handle pre-selected hotel or banquet
   useEffect(() => {
@@ -290,90 +327,454 @@ const Subscription = () => {
     });
   };
 
- 
+  // const handlePurchase = async () => {
+  //   if (!selectedPlan) {
+  //     showWarning("Please select a plan");
+  //     return;
+  //   }
+
+  //   if (selectedPlan.planFor === "hotel" && !selectedHotel) {
+  //     showWarning("Please select a hotel");
+  //     return;
+  //   }
+  //   if (selectedPlan.planFor === "banquet" && !selectedBanquet) {
+  //     showWarning("Please select a banquet hall");
+  //     return;
+  //   }
+
+  //   setPurchaseLoading(true);
+
+  //   const token = localStorage.getItem("token");
+  //   if (!token) {
+  //     showWarning("Login required");
+  //     setPurchaseLoading(false);
+  //     return;
+  //   }
+
+  //   const payableAmount = Number(totalAmount) || 0;
+
+  //   // ========= CASE: FREE PLAN (₹0) =========
+  //   if (payableAmount <= 0) {
+  //     try {
+  //       // Directly activate subscription without payment
+  //       const res = await axios.post(
+  //         "https://hotel-banquet.nearprop.in/api/payment/capture-payment", // ← CHANGE THIS TO YOUR ACTUAL SUBSCRIPTION PURCHASE ENDPOINT
+  //         {
+  //           // planId: selectedPlan._id,
+  //           // hotelId: selectedPlan.planFor === "hotel" ? selectedHotel : null,
+  //           // banquetId:
+  //           //   selectedPlan.planFor === "banquet" ? selectedBanquet : null,
+  //           // couponCode: couponInfo?.code || null,
+  //           // amount: 0,
+  //           // paymentStatus: "free", // optional flag
+  //           // razorpay_payment_id: null,
+  //         },
+  //         {
+  //           headers: {
+  //             Authorization: `Bearer ${token}`,
+  //             "Content-Type": "application/json",
+  //           },
+  //         }
+  //       );
+
+  //       if (res.data.success) {
+  //         toast.success("🎉 Free subscription activated successfully!");
+  //         closeModal();
+  //       } else {
+  //         showError(res.data.message || "Failed to activate subscription");
+  //       }
+  //     } catch (err) {
+  //       showError(err.response?.data?.message || "Activation failed");
+  //     } finally {
+  //       setPurchaseLoading(false);
+  //     }
+  //     return;
+  //   }
+
+  //   // ========= CASE: PAID PLAN → Razorpay =========
+  //   try {
+  //     const loaded = await loadRazorpayScript();
+  //     if (!loaded) {
+  //       showError("Razorpay SDK failed to load");
+  //       setPurchaseLoading(false);
+  //       return;
+  //     }
+
+  //     const amountInPaise = Math.round(payableAmount * 100);
+
+  //     const options = {
+  //       key: "rzp_live_RydWSyrJc8vjYO",
+  //       amount: amountInPaise,
+  //       currency: "INR",
+  //       name: "Hotel Banquet",
+  //       description: `Subscription for ${selectedPlan.name}`,
+  //       handler: async (response) => {
+  //         try {
+  //           const captureRes = await axios.post(
+  //             "https://hotel-banquet.nearprop.in/api/payment/capture-payment",
+  //             {
+  //               razorpay_payment_id: response.razorpay_payment_id,
+  //               amount: payableAmount.toFixed(2),
+  //               planId: selectedPlan._id,
+  //               hotelId:
+  //                 selectedPlan.planFor === "hotel" ? selectedHotel : null,
+  //               banquetId:
+  //                 selectedPlan.planFor === "banquet" ? selectedBanquet : null,
+  //               couponCode: couponInfo?.code || null,
+  //             },
+  //             {
+  //               headers: {
+  //                 Authorization: `Bearer ${token}`,
+  //                 "Content-Type": "application/json",
+  //               },
+  //             }
+  //           );
+
+  //           if (captureRes.data.success) {
+  //             toast.success("✅ Payment successful! Subscription activated.");
+  //             closeModal();
+  //           } else {
+  //             showError(captureRes.data.message || "Payment failed");
+  //           }
+  //         } catch (err) {
+  //           showError(
+  //             err.response?.data?.message || "Payment processing failed"
+  //           );
+  //         } finally {
+  //           setPurchaseLoading(false);
+  //         }
+  //       },
+  //       theme: { color: "#0d89c7ff" },
+  //       modal: {
+  //         ondismiss: () => setPurchaseLoading(false),
+  //       },
+  //     };
+
+  //     new window.Razorpay(options).open();
+  //   } catch (err) {
+  //     showError("Payment initiation failed");
+  //     setPurchaseLoading(false);
+  //   }
+  // };
+
   const handlePurchase = async () => {
-  if (!selectedPlan) {
-    showWarning("Please select a plan");
-    return;
-  }
+    if (!selectedPlan) {
+      showWarning("Please select a plan");
+      return;
+    }
 
-  setPurchaseLoading(true);
+    if (selectedPlan.planFor === "hotel" && !selectedHotel) {
+      showWarning("Please select a hotel");
+      return;
+    }
+    if (selectedPlan.planFor === "banquet" && !selectedBanquet) {
+      showWarning("Please select a banquet hall");
+      return;
+    }
 
-  try {
+    setPurchaseLoading(true);
+
     const token = localStorage.getItem("token");
     if (!token) {
       showWarning("Login required");
+      setPurchaseLoading(false);
       return;
     }
-    // if(razorpayPaymentId){
-    //   setPurchaseLoading(false);
+
+    const payableAmount = Number(totalAmount) || 0;
+
+    // if (payableAmount <= 0) {
+    //   try {
+    //     // Directly activate subscription without payment
+    //     const res = await axios.post(
+    //       "https://hotel-banquet.nearprop.in/api/payment/capture-payment", // ← CHANGE THIS TO YOUR ACTUAL SUBSCRIPTION PURCHASE ENDPOINT
+    //       {
+    //         planId: selectedPlan._id,
+    //         hotelId: selectedPlan.planFor === "hotel" ? selectedHotel : null,
+    //         banquetId:
+    //           selectedPlan.planFor === "banquet" ? selectedBanquet : null,
+    //         couponCode: couponInfo?.code || null,
+    //         amount: 0,
+    //         paymentStatus: "free", // optional flag
+    //         razorpay_payment_id: null,
+    //       },
+    //       {
+    //         headers: {
+    //           Authorization: `Bearer ${token}`,
+    //           "Content-Type": "application/json",
+    //         },
+    //       }
+    //     );
+
+    //     if (res.data.success) {
+    //       toast.success("🎉 Free subscription activated successfully!");
+    //       closeModal();
+    //     }
+        
+        
+    //     else {
+    //       showError(res.data.message || "Failed to activate subscription");
+    //     }
+    //      if (captureRes.data.success) {
+    //           // STEP 2: After successful capture, run purchase API
+    //           const purchaseRes = await axios.post(
+    //             "https://hotel-banquet.nearprop.in/api/subscriptions/plans/purchase",
+    //             {
+    //               planId: selectedPlan._id,
+    //               hotelId:
+    //                 selectedPlan.planFor === "hotel" ? selectedHotel : null,
+    //               banquetHallId:
+    //                 selectedPlan.planFor === "banquet" ? selectedBanquet : null,
+    //               couponCode: couponInfo?.code || null,
+    //               razorpay_payment_id: response.razorpay_payment_id,
+    //               paymentId:
+    //                 captureRes.data.data?.paymentId ||
+    //                 response.razorpay_payment_id,
+    //               amount:
+    //                 captureRes.data.data?.amount ||
+    //                 response.razorpay_payment_id,
+    //               transactionId:
+    //                 captureRes.data.data?.transactionId ||
+    //                 response.razorpay_payment_id,
+    //             },
+    //             {
+    //               headers: {
+    //                 Authorization: `Bearer ${token}`,
+    //                 "Content-Type": "application/json",
+    //               },
+    //             }
+    //           );
+
+    //           if (purchaseRes.data.success) {
+    //             toast.success("✅ Payment successful! Subscription activated.");
+    //             // Show plan ID
+    //             if (purchaseRes.data.data?.planId) {
+    //               toast.info(`Plan ID: ${purchaseRes.data.data.planId}`);
+    //             }
+    //             closeModal();
+    //           } else {
+    //             showError(
+    //               purchaseRes.data.message ||
+    //                 "Payment captured but subscription activation failed"
+    //             );
+    //           }
+    //         } else {
+    //           showError(
+    //             captureRes.data.message || "Payment verification failed"
+    //           );
+    //         }
+    //   } catch (err) {
+    //     showError(err.response?.data?.message || "Activation failed");
+    //   } finally {
+    //     setPurchaseLoading(false);
+    //   }
     //   return;
     // }
 
-    const loaded = await loadRazorpayScript();
-    if (!loaded) {
-      showError("Razorpay SDK failed");
-      return;
-    }
-
-    // ✅ SAFE AMOUNT LOGIC
-    const payableAmount = Number(totalAmount) || 0;
-    const amountInPaise =
-      payableAmount <= 0 ? 100 : Math.round(payableAmount * 100);
-
-   
-
-    const options = {
-      key: "rzp_live_RydWSyrJc8vjYO",
-      amount: amountInPaise,
-      currency: "INR",
-      name: "Hotel Banquet",
-      description: `Subscription for ${selectedPlan.name}`,
-
-      handler: async (response) => {
-        try {
-          const captureRes = await axios.post(
-            "https://hotel-banquet.nearprop.in/api/payment/capture-payment",
-            {
-              razorpay_payment_id: "pay_RzQKcBVRZRp64N",
-              amount: "1",
-            
-            },
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json",
-              },
-            }
-          );
-
-          if (captureRes.data.success) {
-            toast.success("✅ Subscription activated");
-            closeModal();
-          } else {
-            showError("Payment capture failed");
-          }
-        } catch (err) {
-          showError(err.response?.data?.message || "Capture error");
-        } finally {
-          setPurchaseLoading(false);
-        }
+    if (payableAmount <= 0) {
+  try {
+    // STEP 1: Directly capture payment for free subscription
+    const captureRes = await axios.post(
+      "https://hotel-banquet.nearprop.in/api/payment/capture-payment",
+      {
+        planId: selectedPlan._id,
+        hotelId: selectedPlan.planFor === "hotel" ? selectedHotel : null,
+        banquetId: selectedPlan.planFor === "banquet" ? selectedBanquet : null,
+        couponCode: couponInfo?.code || null,
+        amount: 0,
+        paymentStatus: "free",
+        razorpay_payment_id: null,
       },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
 
-      theme: { color: "#0d89c7ff" },
-    };
+    // STEP 2: After successful capture, run purchase API for FREE plan
+    if (captureRes.data.success) {
+      const purchaseRes = await axios.post(
+        "https://hotel-banquet.nearprop.in/api/subscriptions/plans/purchase",
+        {
+          planId: selectedPlan._id,
+          hotelId: selectedPlan.planFor === "hotel" ? selectedHotel : null,
+          banquetHallId: selectedPlan.planFor === "banquet" ? selectedBanquet : null,
+          couponCode: couponInfo?.code || null,
+          razorpay_payment_id: null,
+          paymentId: captureRes.data.data?.paymentId || "FREE-" + Date.now(),
+          amount: 0,
+          transactionId: captureRes.data.data?.transactionId || "FREE-TXN-" + Date.now(),
+          finalPrice: 1,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
-    new window.Razorpay(options).open();
+      if (purchaseRes.data.success) {
+        toast.success("🎉 Free subscription activated successfully!");
+        // Show plan ID
+        if (purchaseRes.data.data?.planId) {
+          toast.info(`Plan ID: ${purchaseRes.data.data.planId}`);
+        }
+        closeModal();
+      } else {
+        showError(purchaseRes.data.message || "Capture succeeded but subscription activation failed");
+      }
+    } else {
+      showError(captureRes.data.message || "Failed to activate free subscription");
+    }
   } catch (err) {
-    showError("Payment error");
+    showError(err.response?.data?.message || "Activation failed");
   } finally {
     setPurchaseLoading(false);
   }
-};
+  return;
+}
 
+    // ========= CASE: PAID PLAN → Razorpay =========
+    try {
+      const loaded = await loadRazorpayScript();
+      if (!loaded) {
+        showError("Razorpay SDK failed to load");
+        setPurchaseLoading(false);
+        return;
+      }
 
+      const amountInPaise = Math.round(payableAmount * 100);
 
+      const options = {
+        key: "rzp_live_RydWSyrJc8vjYO",
+        amount: amountInPaise,
+        currency: "INR",
+        name: "Hotel Banquet",
+        description: `Subscription for ${selectedPlan.name}`,
+        handler: async (response) => {
+          try {
+            // STEP 1: First capture the payment
+            const captureRes = await axios.post(
+              "https://hotel-banquet.nearprop.in/api/payment/capture-payment",
+              {
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_signature: response.razorpay_signature,
+                amount: payableAmount.toFixed(2),
+              },
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                  "Content-Type": "application/json",
+                },
+              }
+            );
 
+            if (captureRes.data.success) {
+              // STEP 2: After successful capture, run purchase API
+              const purchaseRes = await axios.post(
+                "https://hotel-banquet.nearprop.in/api/subscriptions/plans/purchase",
+                {
+                  planId: selectedPlan._id,
+                  hotelId: selectedPlan.planFor === "hotel" ? selectedHotel : null,
+                  banquetHallId:
+                    selectedPlan.planFor === "banquet" ? selectedBanquet : null,
+                  couponCode: couponInfo?.code || null,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  paymentId:
+                    captureRes.data.data?.paymentId ||
+                    response.razorpay_payment_id,
+                  amount:
+                    captureRes.data.data?.amount ||
+                    response.razorpay_payment_id,
+                  transactionId:
+                    captureRes.data.data?.transactionId ||
+                    response.razorpay_payment_id,
+                },
+                {
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                  },
+                }
+              );
+
+              if (purchaseRes.data.success) {
+                toast.success("✅ Payment successful! Subscription activated.");
+                // Show plan ID
+                if (purchaseRes.data.data?.planId) {
+                  toast.info(`Plan ID: ${purchaseRes.data.data.planId}`);
+                }
+                closeModal();
+              } else {
+                showError(
+                  purchaseRes.data.message ||
+                    "Payment captured but subscription activation failed"
+                );
+              }
+            } else {
+              showError(
+                captureRes.data.message || "Payment verification failed"
+              );
+            }
+          } catch (err) {
+            showError(
+              err.response?.data?.message ||
+                `Payment succeeded but processing failed. Contact support with ID: ${response.razorpay_payment_id}`
+            );
+            console.error("Payment processing error:", err);
+          } finally {
+            setPurchaseLoading(false);
+          }
+        },
+        theme: { color: "#0d89c7ff" },
+        modal: {
+          ondismiss: () => {
+            setPurchaseLoading(false);
+            showError("Payment cancelled by user.");
+          },
+        },
+        prefill: {
+          // You can add user email/phone if available
+          // email: "user@example.com",
+          // contact: "9876543210",
+        },
+      };
+
+      // Optional: Create order first
+      try {
+        const orderRes = await axios.post(
+          "https://hotel-banquet.nearprop.in/api/payment/create-order",
+          {
+            amount: amountInPaise,
+            currency: "INR",
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (orderRes.data.success && orderRes.data.data?.id) {
+          options.order_id = orderRes.data.data.id;
+        }
+      } catch (err) {
+        console.log("Order creation optional, proceeding with direct payment");
+      }
+
+      new window.Razorpay(options).open();
+    } catch (err) {
+      showError(
+        "Payment initiation failed: " + (err.message || "Unknown error")
+      );
+      setPurchaseLoading(false);
+    }
+  };
   const handleLoginRedirect = () => {
     window.location.href = "/login";
   };

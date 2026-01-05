@@ -37,45 +37,58 @@ function VisitChart() {
 
         const records = res?.data?.data || [];
 
-        // Initialize weekly structure
+        // ✅ Initialize weekly structure
         const weeklyData = {
-          Sun: 0,
-          Mon: 0,
-          Tue: 0,
-          Wed: 0,
-          Thu: 0,
-          Fri: 0,
-          Sat: 0,
+          Sun: { hotel: 0, banquet: 0 },
+          Mon: { hotel: 0, banquet: 0 },
+          Tue: { hotel: 0, banquet: 0 },
+          Wed: { hotel: 0, banquet: 0 },
+          Thu: { hotel: 0, banquet: 0 },
+          Fri: { hotel: 0, banquet: 0 },
+          Sat: { hotel: 0, banquet: 0 },
         };
 
         let hasDate = false;
 
-        // ✅ Try real date-based grouping
-        records.forEach(function (item) {
-          const dateValue = item.createdAt || item.created_at || item.date;
+        records.forEach(function (item, index) {
+          const dateValue =
+            item.createdAt || item.created_at || item.date;
+
+          const count =
+            Number(item.clickCount || item.clicks || 1);
+
+          const type =
+            (item.type || item.propertyType || "")
+              .toLowerCase();
+
+          let dayName;
 
           if (dateValue) {
             const dayIndex = new Date(dateValue).getDay();
             if (!isNaN(dayIndex)) {
-              const dayName = DAYS[dayIndex];
-              weeklyData[dayName] += Number(item.clickCount) || 0;
+              dayName = DAYS[dayIndex];
               hasDate = true;
             }
           }
+
+          // ⚠️ fallback if no date
+          if (!dayName) {
+            dayName = DAYS[index % 7];
+          }
+
+          if (type === "hotel") {
+            weeklyData[dayName].hotel += count;
+          } else if (type === "banquethall") {
+            weeklyData[dayName].banquet += count;
+          }
         });
 
-        // ⚠️ FALLBACK: No date provided by backend
-        if (!hasDate) {
-          records.forEach(function (item, index) {
-            const dayName = DAYS[index % 7];
-            weeklyData[dayName] += Number(item.clickCount) || 0;
-          });
-        }
-
+        // ✅ Format for recharts
         const formattedData = DAYS.map(function (day) {
           return {
             day,
-            visits: weeklyData[day],
+            hotel: weeklyData[day].hotel,
+            banquet: weeklyData[day].banquet,
           };
         });
 
@@ -97,44 +110,45 @@ function VisitChart() {
   }
 
   if (error) {
-    return <div className="text-center text-red-500 py-6">{error}</div>;
+    return (
+      <div className="text-center text-red-500 py-6">
+        {error}
+      </div>
+    );
   }
 
   return (
     <div className="bg-white p-6 rounded-2xl shadow-lg">
       <h3 className="text-xl font-bold text-gray-800 mb-4 text-center">
-        Weekly Visits (Day-wise)
+        Weekly Visits (Hotel vs Banquet)
       </h3>
 
       <div style={{ width: "100%", height: 320 }}>
         <ResponsiveContainer>
           <LineChart data={chartData}>
-            <defs>
-              <linearGradient id="visitGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="10%" stopColor="#6366f1" stopOpacity={0.4} />
-                <stop offset="90%" stopColor="#6366f1" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-
-            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+            <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="day" />
             <YAxis allowDecimals={false} />
             <Tooltip />
 
-            <Area
-              type="monotone"
-              dataKey="visits"
-              fill="url(#visitGradient)"
-              stroke="none"
-            />
-
+            {/* 🏨 HOTEL */}
             <Line
               type="monotone"
-              dataKey="visits"
+              dataKey="hotel"
               stroke="#6366f1"
               strokeWidth={3}
-              dot={{ r: 5 }}
-              activeDot={{ r: 7 }}
+              dot={{ r: 4 }}
+              name="Hotel"
+            />
+
+            {/* 🏛️ BANQUET */}
+            <Line
+              type="monotone"
+              dataKey="banquet"
+              stroke="#10b981"
+              strokeWidth={3}
+              dot={{ r: 4 }}
+              name="Banquet"
             />
           </LineChart>
         </ResponsiveContainer>

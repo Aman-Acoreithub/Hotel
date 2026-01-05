@@ -3,8 +3,10 @@ import { showSuccess } from "../src/utils/Toast";
 import axios from "axios";
 import { useNavigate } from "react-router-dom"; // सिर्फ redirect के लिए
 import "./AddProperty.css";
+import { toast } from "react-toastify";
 
 const baseurl = "https://hotel-banquet.nearprop.in";
+// const baseurl = "http://192.168.29.50:5002";
 const GOOGLE_MAPS_API_KEY = "AIzaSyAepBinSy2JxyEvbidFz_AnFYFsFlFqQo4";
 
 // Google Maps Location Picker Component (बिल्कुल वैसा ही)
@@ -277,14 +279,6 @@ const AddProperty = () => {
     setSelectedEventType("");
   };
 
-  const handleBanquetImages = (index, files) => {
-    setBanquetEvents((prev) =>
-      prev.map((event, i) =>
-        i === index ? { ...event, images: Array.from(files) } : event
-      )
-    );
-  };
-
   useEffect(() => {
     if (propertyType === "Hotel") {
       setBanquetEvents([]);
@@ -321,28 +315,29 @@ const AddProperty = () => {
     // Banquet
     gstNumber: "",
     hallType: "",
-    capacity: "",
-    pricePerEvent: "",
-    pricePerPlate: "",
 
     // Files
     images: [],
     businessLicense: [],
   });
 
+  // When adding a new hotel room, include all required fields
   const addHotelRoom = () => {
     if (!selectedHotelRoomType) return;
 
     const exists = hotelRooms.some(
       (room) => room.roomType === selectedHotelRoomType
     );
-    if (exists) return;
+    if (exists) {
+      toast.warning("This room type already exists!");
+      return;
+    }
 
     setHotelRooms([
       ...hotelRooms,
       {
         roomType: selectedHotelRoomType,
-        images: [],
+        images: [], // Only roomType and images needed
       },
     ]);
 
@@ -350,9 +345,29 @@ const AddProperty = () => {
   };
 
   const handleHotelImages = (index, files) => {
+    const fileArray = Array.from(files);
     setHotelRooms((prev) =>
       prev.map((room, i) =>
-        i === index ? { ...room, images: Array.from(files) } : room
+        i === index
+          ? {
+              ...room,
+              images: [...(room.images || []), ...fileArray],
+            }
+          : room
+      )
+    );
+  };
+
+  const handleBanquetImages = (index, files) => {
+    const fileArray = Array.from(files);
+    setBanquetEvents((prev) =>
+      prev.map((event, i) =>
+        i === index
+          ? {
+              ...event,
+              images: [...(event.images || []), ...fileArray],
+            }
+          : event
       )
     );
   };
@@ -476,7 +491,13 @@ const AddProperty = () => {
 
       setFormData((prev) => {
         if (name === "images" || name === "businessLicense") {
-          return { ...prev, [name]: Array.from(files) };
+          if (files && files.length > 0) {
+            return {
+              ...prev,
+              [name]: Array.from(files),
+            };
+          }
+          return prev;
         }
 
         if (name === "amenities" && type === "checkbox") {
@@ -486,16 +507,17 @@ const AddProperty = () => {
           return { ...prev, amenities: updated };
         }
 
+        // Handle all other inputs
         return { ...prev, [name]: value };
       });
 
+      // Clear error for this field
       if (errors[name]) {
         setErrors((prev) => ({ ...prev, [name]: undefined }));
       }
     },
     [errors]
   );
-
   const nextStep = useCallback(
     (e) => {
       e.preventDefault();
@@ -539,8 +561,7 @@ const AddProperty = () => {
       gst: null,
       businessLicense: null,
     });
-    // setRooms([]);
-    // setSelectedRoomType("");
+
     setCurrentStep(1);
     setErrors({});
   }, []);
@@ -555,205 +576,186 @@ const AddProperty = () => {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
-        alert("Token not found. Please login again.");
+        toast.error("Token not found. Please login again.");
         setLoading(false);
         return;
       }
 
-      const hasFiles =
-        propertyType === "Banquet" || // ✅ FORCE FormData
-        (formData.images && formData.images.length > 0) ||
-        (propertyType === "Hotel" &&
-          formData.businessLicense &&
-          formData.businessLicense.length > 0);
+      const requestData = new FormData();
 
-      let requestData;
-      let headers = {
-        Authorization: `Bearer ${token}`,
+      // COMMON FIELDS FOR BOTH HOTEL & BANQUET
+
+      const commonFields = {
+        name: formData.name,
+        description: formData.description || "",
+        city: formData.city,
+        state: formData.state,
+        pincode: formData.pinCode,
+        address: formData.address,
+        contactNumber: formData.contactNumber,
+        alternateContact: formData.alternateContact || "",
+        email: formData.email,
+        website: formData.website || "",
       };
 
-      if (hasFiles) {
-        requestData = new FormData();
+      // Append common fields
+      Object.entries(commonFields).forEach(([key, value]) => {
+        if (value !== null && value !== undefined && value !== "") {
+          requestData.append(key, value);
+        }
+      });
 
-        const commonFields = {
-          name: formData.name,
-          description: formData.description,
-          city: formData.city,
-          state: formData.state,
-          // districtId: formData.districtId,
-          pincode: formData.pinCode,
-          address: formData.address,
-          contactNumber: formData.contactNumber,
-          alternateContact: formData.alternateContact,
-          email: formData.email,
-          website: formData.website,
-        };
+      // Append coordinates
+      if (formData.latitude && formData.longitude) {
+        requestData.append("latitude", parseFloat(formData.latitude));
+        requestData.append("longitude", parseFloat(formData.longitude));
+      }
 
-        Object.entries(commonFields).forEach(([key, value]) => {
-          if (value !== null && value !== undefined && value !== "") {
-            requestData.append(key, value);
-          }
-        });
+      // Append amenities
+      if (formData.amenities.length > 0) {
+        requestData.append("amenities", JSON.stringify(formData.amenities));
+      }
 
-        if (
-          formData.latitude.trim() !== "" &&
-          formData.longitude.trim() !== ""
-        ) {
-          requestData.append("latitude", parseFloat(formData.latitude));
-          requestData.append("longitude", parseFloat(formData.longitude));
+      // PROPERTY TYPE SPECIFIC FIELDS
 
-          if (propertyType === "Banquet") {
-            const location = {
-              type: "Point",
-              coordinates: [
-                parseFloat(formData.longitude),
-                parseFloat(formData.latitude),
-              ],
-            };
-            requestData.append("location", JSON.stringify(location));
-          }
+      if (propertyType === "Hotel") {
+        // Hotel specific fields
+        requestData.append("hotelType", formData.type || "Hotel");
+
+        if (formData.registrationNumber) {
+          requestData.append("registrationNumber", formData.registrationNumber);
         }
 
-        if (propertyType === "Hotel") {
-          // ===============================
-          // BASIC HOTEL FIELDS
-          // ===============================
-          const hotelFields = {
-            type: formData.type,
-            registrationNumber: formData.registrationNumber,
-            gst: formData.gst,
-          };
+        if (formData.gstNumber) {
+          requestData.append("gstNumber", formData.gstNumber);
+        }
 
-          Object.entries(hotelFields).forEach(([key, value]) => {
-            if (value !== null && value !== undefined && value !== "") {
-              requestData.append(key, value);
-            }
-          });
+        // HOTEL ROOMS WITH IMAGES
+        if (hotelRooms.length > 0) {
+          // Create rooms array with roomType and required fields
+          const roomsData = hotelRooms.map((room) => ({
+            roomType: room.roomType,
+            price: 0, // Required by backend
+            description: `${room.roomType} room`, // Required by backend
+            capacity: 2, // Required by backend
+          }));
 
-          // ===============================
-          // ✅ HOTEL ROOMS (ROOM TYPES)
-          // ===============================
-          if (hotelRooms && hotelRooms.length > 0) {
-            const roomsPayload = hotelRooms.map((room) => ({
-              roomType: room.roomType,
-            }));
+          requestData.append("rooms", JSON.stringify(roomsData));
 
-            requestData.append("rooms", JSON.stringify(roomsPayload));
-          }
-
-          // ===============================
-          // ✅ ROOM IMAGES (PER ROOM)
-          // ===============================
-          hotelRooms.forEach((room, index) => {
+          // Append room images with correct field names
+          hotelRooms.forEach((room, roomIndex) => {
             if (room.images && room.images.length > 0) {
-              room.images.forEach((file) => {
-                requestData.append(`roomImages[${index}]`, file);
+              room.images.forEach((imageFile, imgIndex) => {
+                // Backend expects: roomImage_0, roomImage_1, etc.
+                requestData.append(`roomImage_${roomIndex}`, imageFile);
               });
             }
           });
-
-          // ===============================
-          // BUSINESS LICENSE FILES
-          // ===============================
-          if (formData.businessLicense && formData.businessLicense.length > 0) {
-            Array.from(formData.businessLicense).forEach((file) => {
-              requestData.append("businessLicense", file);
-            });
-          }
-        } else if (propertyType === "Banquet") {
-          const banquetFields = {
-            gstNumber: formData.gstNumber,
-            hallType: formData.hallType || "indoor",
-          };
-
-          Object.entries(banquetFields).forEach(([key, value]) => {
-            if (value !== null && value !== undefined && value !== "") {
-              requestData.append(key, value);
-            }
-          });
-
-          //   if (propertyType === "Banquet") {
-          //     requestData.append("events", JSON.stringify(formData.eventTypes));
-          //   }
         }
-        // ===============================
-        // ✅ BANQUET EVENTS (FIXED)
-        // ===============================
-        if (propertyType === "Banquet") {
-          if (!Array.isArray(banquetEvents) || banquetEvents.length === 0) {
-            throw new Error("At least one event is required for Banquet");
-          }
 
-          const eventsPayload = banquetEvents.map((event) => ({
+        // BUSINESS LICENSE FILES FOR HOTEL
+        if (formData.businessLicense && formData.businessLicense.length > 0) {
+          formData.businessLicense.forEach((file) => {
+            requestData.append("businessLicense", file);
+          });
+        }
+      } else if (propertyType === "Banquet") {
+        // Banquet specific fields
+        if (formData.gstNumber) {
+          requestData.append("gstNumber", formData.gstNumber);
+        }
+
+        if (formData.hallType) {
+          requestData.append("hallType", formData.hallType);
+        }
+
+        // BANQUET EVENTS WITH IMAGES
+        if (banquetEvents.length > 0) {
+          const eventsData = banquetEvents.map((event) => ({
             eventType: event.eventType,
+            // description: `${event.eventType} event`,
+            // basePrice: 0,
           }));
 
-          // ✅ THIS LINE WAS MISSING
-          requestData.append("events", JSON.stringify(eventsPayload));
-        }
+          requestData.append("events", JSON.stringify(eventsData));
 
-        if (formData.amenities.length > 0) {
-          requestData.append("amenities", JSON.stringify(formData.amenities));
-        }
-
-        if (formData.images && formData.images.length > 0) {
-          formData.images.forEach((file) => {
-            requestData.append("images", file);
+          // Append event images - IMPORTANT: Check backend expectations
+          banquetEvents.forEach((event, eventIndex) => {
+            if (event.images && event.images.length > 0) {
+              // Append each image with correct field name
+              event.images.forEach((imageFile, imgIndex) => {
+                // ✅ CORRECT: eventImages_0, eventImages_1, etc.
+                requestData.append(`eventImages_${eventIndex}`, imageFile);
+              });
+            }
           });
-        }
-      } else {
-        headers["Content-Type"] = "application/json";
-
-        requestData = {
-          name: formData.name,
-          description: formData.description,
-          city: formData.city,
-          state: formData.state,
-          // districtId: formData.districtId,
-          pincode: formData.pinCode,
-          address: formData.address,
-          contactNumber: formData.contactNumber,
-          alternateContact: formData.alternateContact,
-          email: formData.email,
-          website: formData.website,
-          amenities: formData.amenities,
-        };
-
-        if (
-          formData.latitude.trim() !== "" &&
-          formData.longitude.trim() !== ""
-        ) {
-          requestData.latitude = parseFloat(formData.latitude);
-          requestData.longitude = parseFloat(formData.longitude);
-
-          if (propertyType === "Banquet") {
-            requestData.location = {
-              type: "Point",
-              coordinates: [
-                parseFloat(formData.longitude),
-                parseFloat(formData.latitude),
-              ],
-            };
-          }
-        }
-
-        if (propertyType === "Hotel") {
-          requestData = {
-            ...requestData,
-            type: formData.type,
-            registrationNumber: formData.registrationNumber,
-            gst: formData.gst,
-          };
-        } else if (propertyType === "Banquet") {
-          requestData = {
-            ...requestData,
-
-            hallType: formData.hallType || "indoor",
-
-            // eventTypes: formData.eventTypes,
-          };
+          console.log(
+            "Event images appended with field names:",
+            banquetEvents.map((_, i) => `eventImages_${i}`)
+          );
         }
       }
+
+      // PROPERTY IMAGES (FOR BOTH)
+
+      if (formData.images && formData.images.length > 0) {
+        formData.images.forEach((file, index) => {
+          requestData.append("images", file);
+        });
+      }
+
+      // GST FILE (if uploaded)
+      // if (formData.gst && formData.gst.length > 0) {
+      //   formData.gst.forEach((file) => {
+      //     requestData.append("gst", file);
+      //   });
+      // }
+
+      if (formData.gst && formData.gst.trim() !== "") {
+  requestData.append("gst", formData.gst);
+}
+
+
+      // DEBUG: Log FormData contents
+
+      console.log("=== FORM DATA BEING SENT ===");
+      console.log("Property Type:", propertyType);
+
+      if (propertyType === "Hotel") {
+        console.log("Hotel Rooms:", hotelRooms.length);
+        hotelRooms.forEach((room, index) => {
+          console.log(
+            `Room ${index}: ${room.roomType}, Images: ${
+              room.images?.length || 0
+            }`
+          );
+        });
+      } else {
+        console.log("Banquet Events:", banquetEvents.length);
+        banquetEvents.forEach((event, index) => {
+          console.log(
+            `Event ${index}: ${event.eventType}, Images: ${
+              event.images?.length || 0
+            }`
+          );
+        });
+      }
+
+      console.log("FormData entries:");
+      for (let pair of requestData.entries()) {
+        if (pair[1] instanceof File) {
+          console.log(
+            pair[0],
+            `[File: ${pair[1].name}, Size: ${pair[1].size}]`
+          );
+        } else if (typeof pair[1] === "string" && pair[1].length > 100) {
+          console.log(pair[0], `[Long JSON string, length: ${pair[1].length}]`);
+        } else {
+          console.log(pair[0], pair[1]);
+        }
+      }
+
+      // SEND REQUEST
 
       const url =
         propertyType === "Hotel"
@@ -764,51 +766,64 @@ const AddProperty = () => {
         method: "post",
         url,
         data: requestData,
-        headers,
-        timeout: 30000,
+        headers: {
+          Authorization: `Bearer ${token}`,
+          // "Content-Type": "multipart/form-data" is automatically set by axios
+        },
+        timeout: 60000, // Increased timeout for file uploads
       };
-
-      if (hasFiles) {
-        config.headers["Content-Type"] = "multipart/form-data";
-      }
 
       const res = await axios(config);
 
-      showSuccess(res.data.message || `${propertyType} created successfully!`);
+      toast.success(
+        res.data.message || `${propertyType} created successfully!`
+      );
+      console.log("Success Response:", res.data);
 
-      navigate("/hb"); // Success पर redirect
+      navigate("/hb");
     } catch (error) {
-      console.error("Full error object:", error);
-      console.error("Error response:", error.response?.data);
+      console.error("=== SUBMIT ERROR ===");
+      console.error("Full error:", error);
 
-      let errorMessage = "Failed to save property. ";
+      // Better error handling
+      if (error.response) {
+        console.error("Status:", error.response.status);
+        console.error("Headers:", error.response.headers);
+        console.error("Data:", error.response.data);
 
-      if (error.code === "ECONNABORTED") {
-        errorMessage =
-          "Request timeout. Please check your internet connection and try again.";
-      } else if (error.response?.status === 0 || !error.response) {
-        errorMessage =
-          "Network error. Please check if the server is running and accessible.";
-      } else if (error.response?.status === 400) {
-        errorMessage =
-          error.response?.data?.message ||
-          "Invalid data provided. Please check your inputs.";
-      } else if (error.response?.status === 401) {
-        errorMessage = "Authentication failed. Please login again.";
-      } else if (error.response?.status === 403) {
-        errorMessage =
-          "Access denied. You may not have permission to perform this action.";
-      } else if (error.response?.status === 500) {
-        errorMessage =
-          "Server error. Please try again later or contact support.";
+        let errorMessage = "Failed to save property.";
+
+        // Try to extract error message
+        if (error.response.data) {
+          if (typeof error.response.data === "object") {
+            errorMessage =
+              error.response.data.message ||
+              error.response.data.error ||
+              JSON.stringify(error.response.data);
+          } else if (typeof error.response.data === "string") {
+            // Parse HTML error
+            const errorMatch = error.response.data.match(/<pre>(.*?)<\/pre>/s);
+            if (errorMatch) {
+              errorMessage = errorMatch[1].split("<br>")[0].trim();
+            } else {
+              errorMessage = error.response.data.substring(0, 200);
+            }
+          }
+        }
+
+        toast.error(errorMessage);
+      } else if (error.request) {
+        console.error("No response received:", error.request);
+        toast.error("No response from server. Please check your connection.");
       } else {
-        errorMessage =
-          error.response?.data?.message ||
-          error.response?.data?.error ||
-          errorMessage;
+        console.error("Request setup error:", error.message);
+        toast.error(error.message || "Request setup failed");
       }
 
-      alert(errorMessage);
+      // Log specific error for debugging
+      if (error.code === "ECONNABORTED") {
+        toast.error("Request timeout. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -1224,7 +1239,8 @@ const AddProperty = () => {
                       name="alternateContact"
                       value={formData.alternateContact}
                       onChange={handleChange}
-                      placeholder="Enter alternate contact"
+                      maxLength="10"
+                      placeholder="Enter 10 digit mobile number"
                     />
                   </div>
                 </div>
@@ -1237,7 +1253,7 @@ const AddProperty = () => {
                       className="text-gray-500"
                       value={formData.email}
                       onChange={handleChange}
-                      placeholder="Enter email"
+                      placeholder="Enter email "
                     />
                     {renderFormError("email")}
                   </div>
@@ -1271,7 +1287,8 @@ const AddProperty = () => {
                         name="registrationNumber"
                         value={formData.registrationNumber}
                         onChange={handleChange}
-                        placeholder="Enter registration number"
+                        placeholder="e.g. HOTEL/REG/2026/000123
+"
                       />
                       {renderFormError("registrationNumber")}
                     </div>
@@ -1282,7 +1299,8 @@ const AddProperty = () => {
                         name="gst"
                         value={formData.gst}
                         onChange={handleChange}
-                        placeholder="Enter GST number"
+                        placeholder="e.g. 22ABCDE1234F1Z7
+"
                       />
                     </div>
                   </div>
@@ -1296,7 +1314,8 @@ const AddProperty = () => {
                         name="gstNumber"
                         value={formData.gstNumber}
                         onChange={handleChange}
-                        placeholder="Enter GST number"
+                        placeholder="e.g. 22ABCDE1234F1Z7
+"
                       />
                       {renderFormError("gstNumber")}
                     </div>
@@ -1355,9 +1374,7 @@ const AddProperty = () => {
                 <h2>Hotel Capacity & Details</h2>
                 <div className="room-types-wrapper gap-2">
                   <label>Room Types *</label>
-                  {/* {renderFormError("rooms")} */}
                   <div className="form-section">
-                    {/* Select Room */}
                     {renderFormError("rooms")}
                     <div className="flex items-center gap-3 mb-6">
                       <select
@@ -1386,14 +1403,12 @@ const AddProperty = () => {
                       </div>
                     </div>
 
-                    {/* Room Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                       {hotelRooms.map((room, index) => (
                         <div
                           key={index}
                           className="relative rounded-2xl mb-5 w-70 bg-white shadow-md  transition overflow-hidden"
                         >
-                          {/* Remove Button */}
                           <button
                             type="button"
                             onClick={() => removeHotelRoom(index)}
@@ -1402,7 +1417,6 @@ const AddProperty = () => {
                             ×
                           </button>
 
-                          {/* Image Preview */}
                           <div className="h-30  bg-gray-100 flex items-center justify-center">
                             {room.images?.length > 0 ? (
                               <img
@@ -1417,7 +1431,6 @@ const AddProperty = () => {
                             )}
                           </div>
 
-                          {/* Card Content */}
                           <div className=" text-center">
                             <h3 className="text-lg font-bold text-gray-800 ">
                               {room.roomType}
@@ -1432,13 +1445,13 @@ const AddProperty = () => {
                                   handleHotelImages(index, e.target.files)
                                 }
                                 className="
-                w-full  rounded-lg border border-gray-300
-                bg-white  text-sm text-gray-600
-                file:mr-3 file:rounded-lg file:border-0
-                file:bg-teal-600 file:px-4 file:py-2
-                file:text-sm file:font-semibold file:text-white
-                hover:file:bg-teal-700
-              "
+                  w-full  rounded-lg border border-gray-300
+                  bg-white  text-sm text-gray-600
+                  file:mr-3 file:rounded-lg file:border-0
+                  file:bg-teal-600 file:px-4 file:py-2
+                  file:text-sm file:font-semibold file:text-white
+                  hover:file:bg-teal-700
+                "
                               />
                             </label>
 
@@ -1453,9 +1466,7 @@ const AddProperty = () => {
                     </div>
                   </div>
                 </div>
-
                 <div className="form-section">
-                  {/* <h2>Upload Documents & Images</h2> */}
                   <div className="form-group">
                     <label>Property Images</label>
                     {renderFormError("images")}
@@ -1464,8 +1475,8 @@ const AddProperty = () => {
                       name="images"
                       onChange={handleChange}
                       className="  w-full mt-2  rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-600 
-   focus:outline-none focus:ring-2 focus:ring-teal-500 file:mr-4 file:rounded-lg  file:border-0 file:bg-teal-600 file:px-4 file:py-2
- file:text-sm file:font-semibold file:text-white "
+    focus:outline-none focus:ring-2 focus:ring-teal-500 file:mr-4 file:rounded-lg  file:border-0 file:bg-teal-600 file:px-4 file:py-2
+  file:text-sm file:font-semibold file:text-white "
                       multiple
                       accept="image/*"
                     />
@@ -1488,11 +1499,11 @@ const AddProperty = () => {
                         onChange={handleChange}
                         multiple
                         className=" w-full  rounded-lg border border-gray-300
-                bg-white  text-sm text-gray-600
-                file:mr-3 file:rounded-lg file:border-0
-                file:bg-teal-600 file:px-4 file:py-2
-                file:text-sm file:font-semibold file:text-white
-                hover:file:bg-teal-700 "
+                  bg-white  text-sm text-gray-600
+                  file:mr-3 file:rounded-lg file:border-0
+                  file:bg-teal-600 file:px-4 file:py-2
+                  file:text-sm file:font-semibold file:text-white
+                  hover:file:bg-teal-700 "
                         accept=".pdf,image/*"
                       />
                       <small style={{ color: "#666", fontSize: "12px" }}>
@@ -1578,79 +1589,38 @@ const AddProperty = () => {
                         </strong>{" "}
                         {formData.contactNumber || "Not provided"}
                       </div>
-                      {propertyType === "Hotel" && (
-                        <>
-                          {/* <div>
-                          <strong
-                            style={{
-                              color: "#008b8b",
-                              fontSize: "18px",
-                              textTransform: "uppercase",
-                              fontFamily: "Courier, monospace",
-                            }}
-                          >
-                            Total Rooms:
-                          </strong>{" "}
-                          {formData.totalRooms || "Not provided"}
-                        </div> */}
-                          {/* <div>
-                          <strong
-                            style={{
-                              color: "#008b8b",
-                              fontSize: "18px",
-                              textTransform: "uppercase",
-                              fontFamily: "Courier, monospace",
-                            }}
-                          >
-                            Total Beds:
-                          </strong>{" "}
-                          {formData.totalBeds || "Not provided"}
-                        </div> */}
-                        </>
-                      )}
-                      {propertyType === "Banquet" && (
-                        <>
-                          <div>
-                            <strong
-                              style={{
-                                color: "#008b8b",
-                                fontSize: "18px",
-                                textTransform: "uppercase",
-                                fontFamily: "Courier, monospace",
-                              }}
-                            >
-                              Capacity:
-                            </strong>{" "}
-                            {formData.capacity || "Not provided"}
-                          </div>
-                          <div>
-                            <strong
-                              style={{
-                                color: "#008b8b",
-                                fontSize: "18px",
-                                textTransform: "uppercase",
-                                fontFamily: "Courier, monospace",
-                              }}
-                            >
-                              Price Per Event:
-                            </strong>{" "}
-                            ₹{formData.pricePerEvent || "Not provided"}
-                          </div>
-                        </>
-                      )}
-                      {/* <div>
-                      <strong
-                        style={{
-                          color: "#008b8b",
-                          fontSize: "18px",
-                          textTransform: "uppercase",
-                          fontFamily: "Courier, monospace",
-                        }}
-                      >
-                        Amenities:
-                      </strong>{" "}
-                      {formData.amenities.length} selected
-                    </div> */}
+                      {propertyType === "Hotel" && <></>}
+                      {/* {propertyType === "Banquet" && (
+                          <>
+                            <div>
+                              <strong
+                                style={{
+                                  color: "#008b8b",
+                                  fontSize: "18px",
+                                  textTransform: "uppercase",
+                                  fontFamily: "Courier, monospace",
+                                }}
+                              >
+                                Capacity:
+                              </strong>{" "}
+                              {formData.capacity || "Not provided"}
+                            </div>
+                            <div>
+                              <strong
+                                style={{
+                                  color: "#008b8b",
+                                  fontSize: "18px",
+                                  textTransform: "uppercase",
+                                  fontFamily: "Courier, monospace",
+                                }}
+                              >
+                                Price Per Event:
+                              </strong>{" "}
+                              ₹{formData.pricePerEvent || "Not provided"}
+                            </div>
+                          </>
+                        )} */}
+
                       <div>
                         <strong
                           style={{
@@ -1671,6 +1641,7 @@ const AddProperty = () => {
                 </div>
               </div>
             )}
+
             {currentStep === 2 && propertyType === "Banquet" && (
               <div className="form-section ">
                 <div className="room-types-wrapper">

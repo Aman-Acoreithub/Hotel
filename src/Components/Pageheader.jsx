@@ -329,7 +329,7 @@ const Pageheader = ({ path }) => {
             <li><Link to="/" onClick={() => setMenuOpen(false)}>Home</Link></li>
             <li><Link to="/hb" onClick={() => setMenuOpen(false)}>Hotels & Banquets</Link></li>
             <li><Link to="/add-property" onClick={() => setMenuOpen(false)}>Add-Property</Link></li>
-            <li><Link to="/rooms" onClick={() => setMenuOpen(false)}>Rooms</Link></li>
+            <li><Link to="/chat" onClick={() => setMenuOpen(false)}>ChatPanel</Link></li>
             <li><Link to="/reels" onClick={() => setMenuOpen(false)}>Reel</Link></li>
             <li><Link to="/subscription" onClick={() => setMenuOpen(false)}>subscription</Link></li>
             <li><Link to="/userprofile" onClick={() => setMenuOpen(false)}>Profile</Link></li>
