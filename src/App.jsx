@@ -3,29 +3,23 @@ import './App.css';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import Dashboard from './Components/Dashboard';
 import Pageheader from './Components/Pageheader';
-// import PropertyList from './Components/PropertyList';
 import AddProperty from './AddProperty';
 import Login from './Components/Login';
 import Register from './Components/Register';
-// import Profile from './Components/Profile';
 import Subscription from './Components/Subscription';
 import Reels from "./Components/Reels";
 import CreateReel from './Components/CreateReel';
 import HotelDetails from './Components/HotelDetailBanquet';
 import Userprofile from './Components/Userprofile';
 import Dashboardmain from './Components/Welcome Dashboard/Dashboardmain';
-// import Rooms from './Components/Rooms';
 import ChatPanel from './Components/ChatPanel'
-// import RoomDetails from './Components/RoomDetails';
 import { ToastContainer } from "react-toastify";
 import Createroom from './Components/Createroom';
 import UpdateForm from "./Components/UpdateForm";
-// import UpdateRoom from './Components/Updateroom';
 function ConditionalPageheader() {
   const location = useLocation();
   return location.pathname !== '/reels' ? <Pageheader /> : null;
 }
-
 function App() {
   const [count, setCount] = useState(0);
 
@@ -40,9 +34,6 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/chat" element={<ChatPanel />} />
-        {/* <Route path="/rooms" element={<Rooms />} /> */}
-        {/* <Route path="/rooms/:id" element={<RoomDetails />} />
-        <Route path="/rooms/:id/update" element={<UpdateRoom/>} /> */}
         <Route path='/userprofile' element={<Userprofile />}></Route>
         <Route path="/reels" element={<Reels />} />
         <Route path="/subscription" element={<Subscription />} />
@@ -58,5 +49,4 @@ function App() {
     </BrowserRouter>
   );
 }
-
 export default App;
