@@ -1,15 +1,13 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
-import { showSuccess } from "../src/utils/Toast";
-import axios from "axios";
-import { useNavigate } from "react-router-dom"; // सिर्फ redirect के लिए
-import "./AddProperty.css";
 import { toast } from "react-toastify";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import "./AddProperty.css";
 
 const baseurl = "https://hotel-banquet.nearprop.in";
-// const baseurl = "http://192.168.29.50:5002";
 const GOOGLE_MAPS_API_KEY = "AIzaSyAepBinSy2JxyEvbidFz_AnFYFsFlFqQo4";
 
-// Google Maps Location Picker Component (बिल्कुल वैसा ही)
+// Google Maps Location Picker Component
 const GoogleMapLocationPicker = ({
   latitude,
   longitude,
@@ -27,21 +25,15 @@ const GoogleMapLocationPicker = ({
       setIsLoading(false);
       return;
     }
-
     const script = document.createElement("script");
     script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places`;
     script.async = true;
     script.defer = true;
-
-    script.onload = () => {
-      setIsLoading(false);
-    };
-
+    script.onload = () => setIsLoading(false);
     script.onerror = () => {
       setError("Failed to load Google Maps");
       setIsLoading(false);
     };
-
     document.head.appendChild(script);
 
     return () => {
@@ -65,7 +57,6 @@ const GoogleMapLocationPicker = ({
       streetViewControl: true,
       fullscreenControl: true,
     });
-
     mapInstanceRef.current = map;
 
     const marker = new window.google.maps.Marker({
@@ -74,7 +65,6 @@ const GoogleMapLocationPicker = ({
       draggable: true,
       title: "Property Location",
     });
-
     markerRef.current = marker;
 
     marker.addListener("dragend", () => {
@@ -87,7 +77,6 @@ const GoogleMapLocationPicker = ({
     map.addListener("click", (event) => {
       const lat = event.latLng.lat();
       const lng = event.latLng.lng();
-
       marker.setPosition({ lat, lng });
       onLocationChange(lat.toFixed(6), lng.toFixed(6));
     });
@@ -95,21 +84,16 @@ const GoogleMapLocationPicker = ({
     const searchInput = document.getElementById("map-search-input");
     if (searchInput) {
       const searchBox = new window.google.maps.places.SearchBox(searchInput);
-
       map.addListener("bounds_changed", () => {
         searchBox.setBounds(map.getBounds());
       });
-
       searchBox.addListener("places_changed", () => {
         const places = searchBox.getPlaces();
         if (places.length === 0) return;
-
         const place = places[0];
         if (!place.geometry || !place.geometry.location) return;
-
         const lat = place.geometry.location.lat();
         const lng = place.geometry.location.lng();
-
         map.setCenter({ lat, lng });
         map.setZoom(15);
         marker.setPosition({ lat, lng });
@@ -120,10 +104,8 @@ const GoogleMapLocationPicker = ({
 
   useEffect(() => {
     if (!markerRef.current || !mapInstanceRef.current) return;
-
     const lat = parseFloat(latitude);
     const lng = parseFloat(longitude);
-
     if (!isNaN(lat) && !isNaN(lng)) {
       const newPosition = { lat, lng };
       markerRef.current.setPosition(newPosition);
@@ -132,7 +114,6 @@ const GoogleMapLocationPicker = ({
   }, [latitude, longitude]);
 
   if (!isVisible) return null;
-
   if (error) {
     return (
       <div
@@ -171,7 +152,6 @@ const GoogleMapLocationPicker = ({
           }}
         />
       </div>
-
       {isLoading ? (
         <div
           style={{
@@ -197,7 +177,6 @@ const GoogleMapLocationPicker = ({
           }}
         />
       )}
-
       <div
         style={{
           marginTop: "10px",
@@ -218,33 +197,29 @@ const GoogleMapLocationPicker = ({
 
 const AddProperty = () => {
   const navigate = useNavigate();
-
   const [currentStep, setCurrentStep] = useState(1);
   const [propertyType, setPropertyType] = useState("Hotel");
-
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [showMap, setShowMap] = useState(false);
   const [showStates, setShowStates] = useState(false);
   const [searchState, setSearchState] = useState("");
-  const [cities, setCities] = useState([]); // ✅ MUST be []
+  const [cities, setCities] = useState([]);
   const [showCities, setShowCities] = useState(false);
   const [searchCity, setSearchCity] = useState("");
-  // Hotel
+
+  // Hotel states
   const [hotelRooms, setHotelRooms] = useState([]);
   const [selectedHotelRoomType, setSelectedHotelRoomType] = useState("");
 
-  // Banquet
+  // Banquet states
   const [banquetEvents, setBanquetEvents] = useState([]);
   const [selectedEventType, setSelectedEventType] = useState("");
 
   const fetchCitiesByState = async (selectedState) => {
     try {
-      const res = await fetch(
-        "https://api.nearprop.com/api/property-districts"
-      );
+      const res = await fetch("https://api.nearprop.com/api/property-districts");
       const data = await res.json();
-
       const filteredCities = Array.isArray(data)
         ? data.filter(
             (item) =>
@@ -252,8 +227,7 @@ const AddProperty = () => {
               selectedState.trim().toLowerCase()
           )
         : [];
-
-      setCities(filteredCities); // ✅ KEEP FULL OBJECT
+      setCities(filteredCities);
       setShowCities(true);
     } catch (error) {
       console.error("City fetch error:", error);
@@ -264,10 +238,11 @@ const AddProperty = () => {
 
   const addBanquetEvent = () => {
     if (!selectedEventType) return;
-
     const exists = banquetEvents.some((e) => e.eventType === selectedEventType);
-    if (exists) return;
-
+    if (exists) {
+      toast.warning("This event type already exists!");
+      return;
+    }
     setBanquetEvents([
       ...banquetEvents,
       {
@@ -275,7 +250,6 @@ const AddProperty = () => {
         images: [],
       },
     ]);
-
     setSelectedEventType("");
   };
 
@@ -288,6 +262,7 @@ const AddProperty = () => {
       setSelectedHotelRoomType("");
     }
   }, [propertyType]);
+
   const removeBanquetEvent = (index) => {
     setBanquetEvents(banquetEvents.filter((_, i) => i !== index));
   };
@@ -302,29 +277,26 @@ const AddProperty = () => {
     latitude: "",
     longitude: "",
     contactNumber: "",
+    price: "",
     alternateContact: "",
     email: "",
     website: "",
     amenities: [],
-
-    // Hotel
     type: "Hotel",
     registrationNumber: "",
     gst: "",
-
-    // Banquet
     gstNumber: "",
     hallType: "",
-
-    // Files
     images: [],
     businessLicense: [],
+
+    // NEW FIELDS FOR BANQUET
+    pricePerPlate: "",
+    pricePerEvent: "",
   });
 
-  // When adding a new hotel room, include all required fields
   const addHotelRoom = () => {
     if (!selectedHotelRoomType) return;
-
     const exists = hotelRooms.some(
       (room) => room.roomType === selectedHotelRoomType
     );
@@ -332,15 +304,13 @@ const AddProperty = () => {
       toast.warning("This room type already exists!");
       return;
     }
-
     setHotelRooms([
       ...hotelRooms,
       {
         roomType: selectedHotelRoomType,
-        images: [], // Only roomType and images needed
+        images: [],
       },
     ]);
-
     setSelectedHotelRoomType("");
   };
 
@@ -395,439 +365,31 @@ const AddProperty = () => {
     "Security",
   ];
 
-  const eventTypeOptions = [
-    "wedding",
-    "conference",
-    "birthday",
-    "anniversary",
-    "corporate",
-    "other",
+  const EventsTypes = [
+    "Wedding",
+    "Reception",
+    "Engagement",
+    "Ring Ceremony",
+    "Birthday Party",
+    "Cocktail Party",
+    "Anniversary",
+    "Corporate Event",
+    "Conference / Seminar",
+    "Get-together",
   ];
-  const cateringOptionsList = ["veg", "non-veg", "both"];
 
-  const handleLocationChange = useCallback((lat, lng) => {
-    setFormData((prev) => ({
-      ...prev,
-      latitude: lat,
-      longitude: lng,
-    }));
-    setErrors((prev) => ({
-      ...prev,
-      latitude: undefined,
-      longitude: undefined,
-    }));
-  }, []);
-
-  // Validation - सिर्फ required fields check
-  const validateCurrentStep = () => {
-    const newErrors = {};
-
-    // STEP 1 – BASIC INFO
-    if (currentStep === 1) {
-      if (!formData.name.trim()) newErrors.name = "Name is required";
-      if (!formData.address.trim()) newErrors.address = "Address is required";
-      if (!formData.state.trim()) newErrors.state = "State is required";
-      if (!formData.city.trim()) newErrors.city = "District is required";
-      if (!formData.pinCode.trim()) newErrors.pinCode = "Pin Code is required";
-      if (!formData.latitude.trim())
-        newErrors.latitude = "Latitude is required";
-      if (!formData.longitude.trim())
-        newErrors.longitude = "Longitude is required";
-      // Contact Number (10 digits)
-      if (!formData.contactNumber.trim()) {
-        newErrors.contactNumber = "Contact number is required";
-      } else if (!/^[6-9]\d{9}$/.test(formData.contactNumber)) {
-        newErrors.contactNumber = "Enter valid 10 digit mobile number";
-      }
-
-      // Email
-      if (!formData.email.trim()) {
-        newErrors.email = "Email is required";
-      } else if (
-        !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(formData.email)
-      ) {
-        newErrors.email = "Enter valid email address";
-      }
-
-      if (propertyType === "Hotel" && !formData.registrationNumber.trim()) {
-        newErrors.registrationNumber = "Registration number is required";
-      }
-
-      if (propertyType === "Banquet" && !formData.gstNumber.trim()) {
-        newErrors.gstNumber = "GST number is required";
-      }
-    }
-
-    // STEP 2 – FINAL STEP
-    if (currentStep === 2) {
-      if (propertyType === "Hotel") {
-        if (hotelRooms.length === 0) {
-          newErrors.rooms = "Please add at least one room type";
-        }
-
-        if (!formData.images || formData.images.length === 0) {
-          newErrors.images = "Property images are required";
-        }
-      }
-
-      if (propertyType === "Banquet") {
-        if (banquetEvents.length === 0) {
-          newErrors.events = "Please add at least one event type";
-        }
-
-        if (!formData.images || formData.images.length === 0) {
-          newErrors.images = "Banquet images are required";
-        }
-      }
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleChange = useCallback(
-    (e) => {
-      const { name, value, files, type, checked } = e.target;
-
-      setFormData((prev) => {
-        if (name === "images" || name === "businessLicense") {
-          if (files && files.length > 0) {
-            return {
-              ...prev,
-              [name]: Array.from(files),
-            };
-          }
-          return prev;
-        }
-
-        if (name === "amenities" && type === "checkbox") {
-          const updated = checked
-            ? [...prev.amenities, value]
-            : prev.amenities.filter((a) => a !== value);
-          return { ...prev, amenities: updated };
-        }
-
-        // Handle all other inputs
-        return { ...prev, [name]: value };
-      });
-
-      // Clear error for this field
-      if (errors[name]) {
-        setErrors((prev) => ({ ...prev, [name]: undefined }));
-      }
-    },
-    [errors]
-  );
-  const nextStep = useCallback(
-    (e) => {
-      e.preventDefault();
-      if (validateCurrentStep()) {
-        setCurrentStep((prev) => Math.min(prev + 1, 2));
-      }
-    },
-    [currentStep, formData, propertyType]
-  );
-
-  const prevStep = useCallback(() => {
-    setCurrentStep((prev) => Math.max(prev - 1, 1));
-  }, []);
-
-  const goToStep = useCallback((step) => {
-    setCurrentStep(step);
-  }, []);
-
-  const resetForm = useCallback(() => {
-    setFormData({
-      name: "",
-      description: "",
-      hotelType: "Hotel",
-      city: "",
-      state: "",
-      district: "",
-      pincode: "",
-      latitude: "",
-      longitude: "",
-      contactNumber: "",
-      alternateContact: "",
-      email: "",
-      website: "",
-      address: "",
-      registrationNumber: "",
-      gstNumber: "",
-      amenities: [],
-      rooms: [],
-      images: null,
-      videos: null,
-      gst: null,
-      businessLicense: null,
-    });
-
-    setCurrentStep(1);
-    setErrors({});
-  }, []);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    // Final validation on submit
-    if (!validateCurrentStep()) return;
-
-    setLoading(true);
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        toast.error("Token not found. Please login again.");
-        setLoading(false);
-        return;
-      }
-
-      const requestData = new FormData();
-
-      // COMMON FIELDS FOR BOTH HOTEL & BANQUET
-
-      const commonFields = {
-        name: formData.name,
-        description: formData.description || "",
-        city: formData.city,
-        state: formData.state,
-        pincode: formData.pinCode,
-        address: formData.address,
-        contactNumber: formData.contactNumber,
-        alternateContact: formData.alternateContact || "",
-        email: formData.email,
-        website: formData.website || "",
-      };
-
-      // Append common fields
-      Object.entries(commonFields).forEach(([key, value]) => {
-        if (value !== null && value !== undefined && value !== "") {
-          requestData.append(key, value);
-        }
-      });
-
-      // Append coordinates
-      if (formData.latitude && formData.longitude) {
-        requestData.append("latitude", parseFloat(formData.latitude));
-        requestData.append("longitude", parseFloat(formData.longitude));
-      }
-
-      // Append amenities
-      if (formData.amenities.length > 0) {
-        requestData.append("amenities", JSON.stringify(formData.amenities));
-      }
-
-      // PROPERTY TYPE SPECIFIC FIELDS
-
-      if (propertyType === "Hotel") {
-        // Hotel specific fields
-        requestData.append("hotelType", formData.type || "Hotel");
-
-        if (formData.registrationNumber) {
-          requestData.append("registrationNumber", formData.registrationNumber);
-        }
-
-        if (formData.gstNumber) {
-          requestData.append("gstNumber", formData.gstNumber);
-        }
-
-        // HOTEL ROOMS WITH IMAGES
-        if (hotelRooms.length > 0) {
-          // Create rooms array with roomType and required fields
-          const roomsData = hotelRooms.map((room) => ({
-            roomType: room.roomType,
-            price: 0, // Required by backend
-            description: `${room.roomType} room`, // Required by backend
-            capacity: 2, // Required by backend
-          }));
-
-          requestData.append("rooms", JSON.stringify(roomsData));
-
-          // Append room images with correct field names
-          hotelRooms.forEach((room, roomIndex) => {
-            if (room.images && room.images.length > 0) {
-              room.images.forEach((imageFile, imgIndex) => {
-                // Backend expects: roomImage_0, roomImage_1, etc.
-                requestData.append(`roomImage_${roomIndex}`, imageFile);
-              });
-            }
-          });
-        }
-
-        // BUSINESS LICENSE FILES FOR HOTEL
-        if (formData.businessLicense && formData.businessLicense.length > 0) {
-          formData.businessLicense.forEach((file) => {
-            requestData.append("businessLicense", file);
-          });
-        }
-      } else if (propertyType === "Banquet") {
-        // Banquet specific fields
-        if (formData.gstNumber) {
-          requestData.append("gstNumber", formData.gstNumber);
-        }
-
-        if (formData.hallType) {
-          requestData.append("hallType", formData.hallType);
-        }
-
-        // BANQUET EVENTS WITH IMAGES
-        if (banquetEvents.length > 0) {
-          const eventsData = banquetEvents.map((event) => ({
-            eventType: event.eventType,
-            // description: `${event.eventType} event`,
-            // basePrice: 0,
-          }));
-
-          requestData.append("events", JSON.stringify(eventsData));
-
-          // Append event images - IMPORTANT: Check backend expectations
-          banquetEvents.forEach((event, eventIndex) => {
-            if (event.images && event.images.length > 0) {
-              // Append each image with correct field name
-              event.images.forEach((imageFile, imgIndex) => {
-                // ✅ CORRECT: eventImages_0, eventImages_1, etc.
-                requestData.append(`eventImages_${eventIndex}`, imageFile);
-              });
-            }
-          });
-          console.log(
-            "Event images appended with field names:",
-            banquetEvents.map((_, i) => `eventImages_${i}`)
-          );
-        }
-      }
-
-      // PROPERTY IMAGES (FOR BOTH)
-
-      if (formData.images && formData.images.length > 0) {
-        formData.images.forEach((file, index) => {
-          requestData.append("images", file);
-        });
-      }
-
-      // GST FILE (if uploaded)
-      // if (formData.gst && formData.gst.length > 0) {
-      //   formData.gst.forEach((file) => {
-      //     requestData.append("gst", file);
-      //   });
-      // }
-
-      if (formData.gst && formData.gst.trim() !== "") {
-  requestData.append("gst", formData.gst);
-}
-
-
-      // DEBUG: Log FormData contents
-
-      console.log("=== FORM DATA BEING SENT ===");
-      console.log("Property Type:", propertyType);
-
-      if (propertyType === "Hotel") {
-        console.log("Hotel Rooms:", hotelRooms.length);
-        hotelRooms.forEach((room, index) => {
-          console.log(
-            `Room ${index}: ${room.roomType}, Images: ${
-              room.images?.length || 0
-            }`
-          );
-        });
-      } else {
-        console.log("Banquet Events:", banquetEvents.length);
-        banquetEvents.forEach((event, index) => {
-          console.log(
-            `Event ${index}: ${event.eventType}, Images: ${
-              event.images?.length || 0
-            }`
-          );
-        });
-      }
-
-      console.log("FormData entries:");
-      for (let pair of requestData.entries()) {
-        if (pair[1] instanceof File) {
-          console.log(
-            pair[0],
-            `[File: ${pair[1].name}, Size: ${pair[1].size}]`
-          );
-        } else if (typeof pair[1] === "string" && pair[1].length > 100) {
-          console.log(pair[0], `[Long JSON string, length: ${pair[1].length}]`);
-        } else {
-          console.log(pair[0], pair[1]);
-        }
-      }
-
-      // SEND REQUEST
-
-      const url =
-        propertyType === "Hotel"
-          ? `${baseurl}/api/hotels`
-          : `${baseurl}/api/banquet-halls`;
-
-      const config = {
-        method: "post",
-        url,
-        data: requestData,
-        headers: {
-          Authorization: `Bearer ${token}`,
-          // "Content-Type": "multipart/form-data" is automatically set by axios
-        },
-        timeout: 60000, // Increased timeout for file uploads
-      };
-
-      const res = await axios(config);
-
-      toast.success(
-        res.data.message || `${propertyType} created successfully!`
-      );
-      console.log("Success Response:", res.data);
-
-      navigate("/hb");
-    } catch (error) {
-      console.error("=== SUBMIT ERROR ===");
-      console.error("Full error:", error);
-
-      // Better error handling
-      if (error.response) {
-        console.error("Status:", error.response.status);
-        console.error("Headers:", error.response.headers);
-        console.error("Data:", error.response.data);
-
-        let errorMessage = "Failed to save property.";
-
-        // Try to extract error message
-        if (error.response.data) {
-          if (typeof error.response.data === "object") {
-            errorMessage =
-              error.response.data.message ||
-              error.response.data.error ||
-              JSON.stringify(error.response.data);
-          } else if (typeof error.response.data === "string") {
-            // Parse HTML error
-            const errorMatch = error.response.data.match(/<pre>(.*?)<\/pre>/s);
-            if (errorMatch) {
-              errorMessage = errorMatch[1].split("<br>")[0].trim();
-            } else {
-              errorMessage = error.response.data.substring(0, 200);
-            }
-          }
-        }
-
-        toast.error(errorMessage);
-      } else if (error.request) {
-        console.error("No response received:", error.request);
-        toast.error("No response from server. Please check your connection.");
-      } else {
-        console.error("Request setup error:", error.message);
-        toast.error(error.message || "Request setup failed");
-      }
-
-      // Log specific error for debugging
-      if (error.code === "ECONNABORTED") {
-        toast.error("Request timeout. Please try again.");
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
+  const roomTypes = [
+    "Standard",
+    "Deluxe",
+    "Premium",
+    "Executive",
+    "Royal",
+    "Grand",
+    "Luxury",
+    "Platinum",
+    "Elite",
+    "Presidential",
+  ];
 
   const states = [
     "Andhra Pradesh",
@@ -861,31 +423,290 @@ const AddProperty = () => {
     "Delhi",
   ];
 
-  const EventsTypes = [
-    "Wedding",
-    "Reception",
-    "Engagement",
-    "Ring Ceremony",
-    "Birthday Party",
-    "Cocktail Party",
-    "Anniversary",
-    "Corporate Event",
-    "Conference / Seminar",
-    "Get-together",
-  ];
+  const handleLocationChange = useCallback((lat, lng) => {
+    setFormData((prev) => ({
+      ...prev,
+      latitude: lat,
+      longitude: lng,
+    }));
+    setErrors((prev) => ({
+      ...prev,
+      latitude: undefined,
+      longitude: undefined,
+    }));
+  }, []);
 
-  const roomTypes = [
-    "Standard",
-    "Deluxe",
-    "Premium",
-    "Executive",
-    "Royal",
-    "Grand",
-    "Luxury",
-    "Platinum",
-    "Elite",
-    "Presidential",
-  ];
+  const validateCurrentStep = () => {
+    const newErrors = {};
+
+    if (currentStep === 1) {
+      if (!formData.name.trim()) newErrors.name = "Name is required";
+      if (!formData.address.trim()) newErrors.address = "Address is required";
+      if (!formData.state.trim()) newErrors.state = "State is required";
+      if (!formData.city.trim()) newErrors.city = "District is required";
+      if (!formData.pinCode.trim()) newErrors.pinCode = "Pin Code is required";
+      if (!formData.latitude.trim())
+        newErrors.latitude = "Latitude is required";
+      if (!formData.longitude.trim())
+        newErrors.longitude = "Longitude is required";
+
+      if (!formData.contactNumber.trim()) {
+        newErrors.contactNumber = "Contact number is required";
+      } else if (!/^[6-9]\d{9}$/.test(formData.contactNumber)) {
+        newErrors.contactNumber = "Enter valid 10 digit mobile number";
+      }
+
+      if (!formData.email.trim()) {
+        newErrors.email = "Email is required";
+      } else if (
+        !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(formData.email)
+      ) {
+        newErrors.email = "Enter valid email address";
+      }
+
+      if (propertyType === "Hotel" && !formData.registrationNumber.trim()) {
+        newErrors.registrationNumber = "Registration number is required";
+      }
+
+      if (propertyType === "Banquet" && !formData.gstNumber.trim()) {
+        newErrors.gstNumber = "GST number is required";
+      }
+
+      // Validation for Banquet pricing fields
+      if (propertyType === "Banquet") {
+        if (!formData.pricePerPlate || formData.pricePerPlate <= 0) {
+          newErrors.pricePerPlate = "Price per plate must be greater than 0";
+        }
+        if (!formData.pricePerEvent || formData.pricePerEvent <= 0) {
+          newErrors.pricePerEvent = "Base price per event must be greater than 0";
+        }
+      }
+    }
+
+    if (currentStep === 2) {
+      if (propertyType === "Hotel") {
+        if (hotelRooms.length === 0) {
+          newErrors.rooms = "Please add at least one room type";
+        }
+        if (!formData.images || formData.images.length === 0) {
+          newErrors.images = "Property images are required";
+        }
+
+      }
+      if (propertyType === "Banquet") {
+        if (banquetEvents.length === 0) {
+          newErrors.events = "Please add at least one event type";
+        }
+        if (!formData.images || formData.images.length === 0) {
+          newErrors.images = "Banquet images are required";
+        }
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleChange = useCallback(
+    (e) => {
+      const { name, value, files, type, checked } = e.target;
+      setFormData((prev) => {
+        if (name === "images" || name === "businessLicense") {
+          if (files && files.length > 0) {
+            return {
+              ...prev,
+              [name]: Array.from(files),
+            };
+          }
+          return prev;
+        }
+        if (name === "amenities" && type === "checkbox") {
+          const updated = checked
+            ? [...prev.amenities, value]
+            : prev.amenities.filter((a) => a !== value);
+          return { ...prev, amenities: updated };
+        }
+        return { ...prev, [name]: value };
+      });
+
+      if (errors[name]) {
+        setErrors((prev) => ({ ...prev, [name]: undefined }));
+      }
+    },
+    [errors]
+  );
+
+  const nextStep = useCallback(
+    (e) => {
+      e.preventDefault();
+      if (validateCurrentStep()) {
+        setCurrentStep((prev) => Math.min(prev + 1, 2));
+      }
+    },
+    [currentStep, formData, propertyType]
+  );
+
+  const prevStep = useCallback(() => {
+    setCurrentStep((prev) => Math.max(prev - 1, 1));
+  }, []);
+
+  const goToStep = useCallback((step) => {
+    setCurrentStep(step);
+  }, []);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!validateCurrentStep()) return;
+    setLoading(true);
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        toast.error("Token not found. Please login again.");
+        setLoading(false);
+        return;
+      }
+
+      const requestData = new FormData();
+
+      const commonFields = {
+        name: formData.name,
+        description: formData.description || "",
+        city: formData.city,
+        state: formData.state,
+        pincode: formData.pinCode,
+        address: formData.address,
+        contactNumber: formData.contactNumber,
+        price: formData.price,
+        alternateContact: formData.alternateContact || "",
+        email: formData.email,
+        website: formData.website || "",
+      };
+
+      Object.entries(commonFields).forEach(([key, value]) => {
+        if (value !== null && value !== undefined && value !== "") {
+          requestData.append(key, value);
+        }
+      });
+
+      if (formData.latitude && formData.longitude) {
+        requestData.append("latitude", parseFloat(formData.latitude));
+        requestData.append("longitude", parseFloat(formData.longitude));
+      }
+
+      if (formData.amenities.length > 0) {
+        requestData.append("amenities", JSON.stringify(formData.amenities));
+      }
+
+      if (propertyType === "Hotel") {
+        requestData.append("hotelType", formData.type || "Hotel");
+        if (formData.registrationNumber) {
+          requestData.append("registrationNumber", formData.registrationNumber);
+        }
+        if (formData.gst) {
+          requestData.append("gstNumber", formData.gst);
+        }
+       
+
+        if (hotelRooms.length > 0) {
+          const roomsData = hotelRooms.map((room) => ({
+            roomType: room.roomType,
+            price: 0,
+            description: `${room.roomType} room`,
+            capacity: 2,
+          }));
+          requestData.append("rooms", JSON.stringify(roomsData));
+
+          hotelRooms.forEach((room, roomIndex) => {
+            if (room.images && room.images.length > 0) {
+              room.images.forEach((imageFile) => {
+                requestData.append(`roomImage_${roomIndex}`, imageFile);
+              });
+            }
+          });
+        }
+
+        if (formData.businessLicense && formData.businessLicense.length > 0) {
+          formData.businessLicense.forEach((file) => {
+            requestData.append("businessLicense", file);
+          });
+        }
+      } else if (propertyType === "Banquet") {
+        if (formData.gstNumber) {
+          requestData.append("gstNumber", formData.gstNumber);
+        }
+        if (formData.hallType) {
+          requestData.append("hallType", formData.hallType);
+        }
+
+        // Send price fields
+        if (formData.pricePerPlate) {
+          requestData.append("pricePerPlate", parseInt(formData.pricePerPlate, 10));
+        }
+        if (formData.pricePerEvent) {
+          requestData.append("pricePerEvent", parseInt(formData.pricePerEvent, 10));
+        }
+
+        if (banquetEvents.length > 0) {
+          const eventsData = banquetEvents.map((event) => ({
+            eventType: event.eventType,
+          }));
+          requestData.append("events", JSON.stringify(eventsData));
+
+          banquetEvents.forEach((event, eventIndex) => {
+            if (event.images && event.images.length > 0) {
+              event.images.forEach((imageFile) => {
+                requestData.append(`eventImages_${eventIndex}`, imageFile);
+              });
+            }
+          });
+        }
+      }
+
+      if (formData.images && formData.images.length > 0) {
+        formData.images.forEach((file) => {
+          requestData.append("images", file);
+        });
+      }
+
+      if (formData.gst && formData.gst.trim() !== "") {
+        requestData.append("gst", formData.gst);
+      }
+
+      const url =
+        propertyType === "Hotel"
+          ? `${baseurl}/api/hotels`
+          : `${baseurl}/api/banquet-halls`;
+
+      const config = {
+        method: "post",
+        url,
+        data: requestData,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        timeout: 60000,
+      };
+
+      const res = await axios(config);
+      toast.success(
+        res.data.message || `${propertyType} created successfully!`
+      );
+      navigate("/hb");
+    } catch (error) {
+      console.error("Submit Error:", error);
+      let errorMessage = "Failed to save property.";
+      if (error.response?.data) {
+        errorMessage =
+          error.response.data.message ||
+          error.response.data.error ||
+          JSON.stringify(error.response.data);
+      }
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const renderFormError = (fieldName) => {
     return errors[fieldName] ? (
@@ -940,7 +761,6 @@ const AddProperty = () => {
                 Banquet
               </button>
             </div>
-
             <div className="chain-container">
               <div className="chain-link">
                 <div
@@ -983,6 +803,7 @@ const AddProperty = () => {
                     {renderFormError("name")}
                   </div>
                 </div>
+
                 <div className="form-group">
                   <label>Description</label>
                   <textarea
@@ -993,6 +814,7 @@ const AddProperty = () => {
                     rows="3"
                   />
                 </div>
+
                 <div className="form-group">
                   <label>Address *</label>
                   <textarea
@@ -1008,7 +830,6 @@ const AddProperty = () => {
                 <div className="form-row">
                   <div className="form-group state-select">
                     <label>State *</label>
-
                     <input
                       type="text"
                       value={formData.state}
@@ -1025,7 +846,6 @@ const AddProperty = () => {
                         setShowStates(true);
                       }}
                     />
-
                     {showStates && (
                       <div className="state-dropdown">
                         {states
@@ -1038,9 +858,9 @@ const AddProperty = () => {
                               className="state-option"
                               onClick={() => {
                                 setFormData({ ...formData, state, city: "" });
-                                setSearchState(""); // ✅ RESET
-                                setShowStates(false); // ✅ CLOSE
-                                fetchCitiesByState(state); // ✅ API CALL
+                                setSearchState("");
+                                setShowStates(false);
+                                fetchCitiesByState(state);
                               }}
                             >
                               {state}
@@ -1050,64 +870,57 @@ const AddProperty = () => {
                     )}
                     {renderFormError("state")}
                   </div>
-                  <div>
-                    <div className="form-group state-select">
-                      <label>District *</label>
 
-                      <input
-                        type="text"
-                        value={formData.city || ""}
-                        placeholder={
-                          formData.state
-                            ? "Select district"
-                            : "Select state first"
-                        }
-                        className="state-input"
-                        disabled={!formData.state}
-                        onClick={() => {
-                          if (Array.isArray(cities) && cities.length > 0) {
-                            setShowCities(true);
-                          }
-                        }}
-                        onChange={(e) => {
-                          setSearchCity(e.target.value);
-                          setFormData((prev) => ({
-                            ...prev,
-                            city: e.target.value,
-                            pinCode: "", // reset pin while typing
-                          }));
-                          setShowCities(true);
-                        }}
-                      />
-
-                      {showCities && cities.length > 0 && (
-                        <div className="state-dropdown">
-                          {cities
-                            .filter((item) =>
-                              item.city
-                                .toLowerCase()
-                                .includes(searchCity.toLowerCase())
-                            )
-                            .map((item, index) => (
-                              <div
-                                key={index}
-                                className="state-option"
-                                onClick={() => {
-                                  setFormData((prev) => ({
-                                    ...prev,
-                                    city: item.city,
-                                    pinCode: String(item.pincode), // ✅ AUTO PIN CODE
-                                  }));
-                                  setSearchCity("");
-                                  setShowCities(false);
-                                }}
-                              >
-                                {item.city}
-                              </div>
-                            ))}
-                        </div>
-                      )}
-                    </div>
+                  <div className="form-group state-select">
+                    <label>District *</label>
+                    <input
+                      type="text"
+                      value={formData.city || ""}
+                      placeholder={
+                        formData.state ? "Select district" : "Select state first"
+                      }
+                      className="state-input"
+                      disabled={!formData.state}
+                      onClick={() => {
+                        if (cities.length > 0) setShowCities(true);
+                      }}
+                      onChange={(e) => {
+                        setSearchCity(e.target.value);
+                        setFormData((prev) => ({
+                          ...prev,
+                          city: e.target.value,
+                          pinCode: "",
+                        }));
+                        setShowCities(true);
+                      }}
+                    />
+                    {showCities && cities.length > 0 && (
+                      <div className="state-dropdown">
+                        {cities
+                          .filter((item) =>
+                            item.city
+                              .toLowerCase()
+                              .includes(searchCity.toLowerCase())
+                          )
+                          .map((item, index) => (
+                            <div
+                              key={index}
+                              className="state-option"
+                              onClick={() => {
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  city: item.city,
+                                  pinCode: String(item.pincode),
+                                }));
+                                setSearchCity("");
+                                setShowCities(false);
+                              }}
+                            >
+                              {item.city}
+                            </div>
+                          ))}
+                      </div>
+                    )}
                     {renderFormError("city")}
                   </div>
 
@@ -1117,24 +930,11 @@ const AddProperty = () => {
                       type="text"
                       name="pinCode"
                       value={formData.pinCode}
-                      placeholder="Auto selected"
                       onChange={handleChange}
+                      placeholder="Auto selected"
                     />
                     {renderFormError("pinCode")}
                   </div>
-                  {/* <div className="form-row">
-                    <div className="form-group">
-                      <label>City *</label>
-                      <input
-                        type="text"
-                        name="districtId"
-                        value={formData.districtId}
-                        onChange={handleChange}
-                        placeholder="Enter district ID"
-                      />
-                      {renderFormError("districtId")}
-                    </div>
-                  </div> */}
                 </div>
 
                 <div className="form-group" style={{ marginTop: "20px" }}>
@@ -1150,7 +950,6 @@ const AddProperty = () => {
                       cursor: "pointer",
                       fontSize: "14px",
                       fontWeight: "600",
-                      transition: "all 0.3s ease",
                       marginBottom: "15px",
                       display: "flex",
                       alignItems: "center",
@@ -1189,29 +988,31 @@ const AddProperty = () => {
                     </div>
                   )}
 
-                  <div className="form-group">
-                    <label>Latitude *</label>
-                    <input
-                      type="number"
-                      name="latitude"
-                      value={formData.latitude}
-                      onChange={handleChange}
-                      placeholder="Enter latitude"
-                      step="any"
-                    />
-                    {renderFormError("latitude")}
-                  </div>
-                  <div className="form-group">
-                    <label>Longitude *</label>
-                    <input
-                      type="number"
-                      name="longitude"
-                      value={formData.longitude}
-                      onChange={handleChange}
-                      placeholder="Enter longitude"
-                      step="any"
-                    />
-                    {renderFormError("longitude")}
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>Latitude *</label>
+                      <input
+                        type="number"
+                        name="latitude"
+                        value={formData.latitude}
+                        onChange={handleChange}
+                        placeholder="Enter latitude"
+                        step="any"
+                      />
+                      {renderFormError("latitude")}
+                    </div>
+                    <div className="form-group">
+                      <label>Longitude *</label>
+                      <input
+                        type="number"
+                        name="longitude"
+                        value={formData.longitude}
+                        onChange={handleChange}
+                        placeholder="Enter longitude"
+                        step="any"
+                      />
+                      {renderFormError("longitude")}
+                    </div>
                   </div>
                 </div>
 
@@ -1229,7 +1030,6 @@ const AddProperty = () => {
                       }}
                       placeholder="Enter 10 digit mobile number"
                     />
-
                     {renderFormError("contactNumber")}
                   </div>
                   <div className="form-group">
@@ -1246,14 +1046,32 @@ const AddProperty = () => {
                 </div>
                 <div className="form-row">
                   <div className="form-group">
+                    <label>Price *</label>
+                    <input
+                      type="number"
+                      name="price"
+                      value={formData.price}
+                      // maxLength="10"
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, "");
+                        setFormData({ ...formData, price: value });
+                      }}
+                      placeholder="Enter price"
+                    />
+                    {renderFormError("price")}
+                  </div>
+                 
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
                     <label>Email *</label>
                     <input
                       type="email"
                       name="email"
-                      className="text-gray-500"
                       value={formData.email}
                       onChange={handleChange}
-                      placeholder="Enter email "
+                      placeholder="Enter email"
                     />
                     {renderFormError("email")}
                   </div>
@@ -1268,6 +1086,7 @@ const AddProperty = () => {
                     />
                   </div>
                 </div>
+
                 {propertyType === "Hotel" && (
                   <div className="form-row">
                     <div className="form-group">
@@ -1287,8 +1106,7 @@ const AddProperty = () => {
                         name="registrationNumber"
                         value={formData.registrationNumber}
                         onChange={handleChange}
-                        placeholder="e.g. HOTEL/REG/2026/000123
-"
+                        placeholder="e.g. HOTEL/REG/2026/000123"
                       />
                       {renderFormError("registrationNumber")}
                     </div>
@@ -1299,40 +1117,69 @@ const AddProperty = () => {
                         name="gst"
                         value={formData.gst}
                         onChange={handleChange}
-                        placeholder="e.g. 22ABCDE1234F1Z7
-"
+                        placeholder="e.g. 22ABCDE1234F1Z7"
                       />
                     </div>
                   </div>
                 )}
+
                 {propertyType === "Banquet" && (
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label>GST Number *</label>
-                      <input
-                        type="text"
-                        name="gstNumber"
-                        value={formData.gstNumber}
-                        onChange={handleChange}
-                        placeholder="e.g. 22ABCDE1234F1Z7
-"
-                      />
-                      {renderFormError("gstNumber")}
+                  <>
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label>GST Number *</label>
+                        <input
+                          type="text"
+                          name="gstNumber"
+                          value={formData.gstNumber}
+                          onChange={handleChange}
+                          placeholder="e.g. 22ABCDE1234F1Z7"
+                        />
+                        {renderFormError("gstNumber")}
+                      </div>
+                      <div className="form-group">
+                        <label>Hall Type</label>
+                        <select
+                          name="hallType"
+                          value={formData.hallType}
+                          onChange={handleChange}
+                        >
+                          <option value="">Select type</option>
+                          <option value="indoor">Indoor</option>
+                          <option value="outdoor">Outdoor</option>
+                          <option value="both">Both</option>
+                        </select>
+                      </div>
                     </div>
-                    <div className="form-group">
-                      <label>Hall Type</label>
-                      <select
-                        name="hallType"
-                        value={formData.hallType}
-                        onChange={handleChange}
-                      >
-                        <option value="">Select type</option>
-                        <option value="indoor">Indoor</option>
-                        <option value="outdoor">Outdoor</option>
-                        <option value="both">Both</option>
-                      </select>
+
+                    {/* NEW PRICE FIELDS */}
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label>Price Per Plate (₹) *</label>
+                        <input
+                          type="number"
+                          name="pricePerPlate"
+                          value={formData.pricePerPlate}
+                          onChange={handleChange}
+                          placeholder="e.g. 850"
+                          min="1"
+                        />
+                        {renderFormError("pricePerPlate")}
+                      </div>
+                      <div className="form-group">
+                        <label>Base Price Per Event (₹) *</label>
+                        <input
+                          type="number"
+                          name="pricePerEvent"
+                          value={formData.pricePerEvent}
+                          onChange={handleChange}
+                          placeholder="e.g. 150000"
+                          min="1"
+                        />
+                        {renderFormError("pricePerEvent")}
+                      </div>
                     </div>
-                  </div>
+                  </>
                 )}
 
                 <div className="form-group">
@@ -1341,8 +1188,7 @@ const AddProperty = () => {
                     className="checkbox-grid"
                     style={{
                       display: "grid",
-                      gridTemplateColumns:
-                        "repeat(auto-fit, minmax(150px, 1fr))",
+                      gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
                       gap: "10px",
                     }}
                   >
@@ -1369,577 +1215,230 @@ const AddProperty = () => {
                 </div>
               </div>
             )}
+
+            {/* Step 2 - Hotel */}
             {currentStep === 2 && propertyType === "Hotel" && (
               <div className="form-section">
                 <h2>Hotel Capacity & Details</h2>
                 <div className="room-types-wrapper gap-2">
                   <label>Room Types *</label>
-                  <div className="form-section">
-                    {renderFormError("rooms")}
-                    <div className="flex items-center gap-3 mb-6">
-                      <select
-                        value={selectedHotelRoomType}
-                        onChange={(e) =>
-                          setSelectedHotelRoomType(e.target.value)
-                        }
-                        className="w-1/2 rounded-xl text-[#008b8b] font-semibold border mt-2 border-gray-300 px-4 py-2 text-sm focus:ring-2 focus:ring-teal-500"
-                      >
-                        <option value="">Select room type</option>
-                        {roomTypes.map((type) => (
-                          <option key={type} value={type}>
-                            {type}
-                          </option>
-                        ))}
-                      </select>
+                  {renderFormError("rooms")}
+                  <div className="flex items-center gap-3 mb-6">
+                    <select
+                      value={selectedHotelRoomType}
+                      onChange={(e) => setSelectedHotelRoomType(e.target.value)}
+                      className="w-1/2 rounded-xl text-[#008b8b] font-semibold border mt-2 border-gray-300 px-4 py-2 text-sm focus:ring-2 focus:ring-teal-500"
+                    >
+                      <option value="">Select room type</option>
+                      {roomTypes.map((type) => (
+                        <option key={type} value={type}>
+                          {type}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={addHotelRoom}
+                      className="rounded-xl bg-teal-600 px-6 py-2 text-sm font-semibold text-white hover:bg-teal-700"
+                    >
+                      + Add Room
+                    </button>
+                  </div>
 
-                      <div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {hotelRooms.map((room, index) => (
+                      <div
+                        key={index}
+                        className="relative rounded-2xl mb-5 w-70 bg-white shadow-md transition overflow-hidden"
+                      >
                         <button
                           type="button"
-                          onClick={addHotelRoom}
-                          className="rounded-xl bg-teal-600 px-6 py-2 text-sm font-semibold text-white hover:bg-teal-700"
+                          onClick={() => removeHotelRoom(index)}
+                          className="absolute top-2 right-2 h-8 w-8 rounded-full bg-red-500 text-white font-bold hover:bg-red-600"
                         >
-                          + Add Room
+                          ×
                         </button>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {hotelRooms.map((room, index) => (
-                        <div
-                          key={index}
-                          className="relative rounded-2xl mb-5 w-70 bg-white shadow-md  transition overflow-hidden"
-                        >
-                          <button
-                            type="button"
-                            onClick={() => removeHotelRoom(index)}
-                            className="absolute top-2 right-2 h-8 w-8 rounded-full bg-red-500 text-white font-bold hover:bg-red-600"
-                          >
-                            ×
-                          </button>
-
-                          <div className="h-30  bg-gray-100 flex items-center justify-center">
-                            {room.images?.length > 0 ? (
-                              <img
-                                src={URL.createObjectURL(room.images[0])}
-                                alt={room.roomType}
-                                className="h-full w-full object-cover"
-                              />
-                            ) : (
-                              <span className="text-gray-400 text-sm">
-                                No Room Image
-                              </span>
-                            )}
-                          </div>
-
-                          <div className=" text-center">
-                            <h3 className="text-lg font-bold text-gray-800 ">
-                              {room.roomType}
-                            </h3>
-
-                            <label className="block">
-                              <input
-                                type="file"
-                                multiple
-                                accept="image/*"
-                                onChange={(e) =>
-                                  handleHotelImages(index, e.target.files)
-                                }
-                                className="
-                  w-full  rounded-lg border border-gray-300
-                  bg-white  text-sm text-gray-600
-                  file:mr-3 file:rounded-lg file:border-0
-                  file:bg-teal-600 file:px-4 file:py-2
-                  file:text-sm file:font-semibold file:text-white
-                  hover:file:bg-teal-700
-                "
-                              />
-                            </label>
-
-                            {room.images?.length > 0 && (
-                              <p className="mb-2 text-xs text-gray-500">
-                                {room.images.length} image(s) selected
-                              </p>
-                            )}
-                          </div>
+                        <div className="h-30 bg-gray-100 flex items-center justify-center">
+                          {room.images?.length > 0 ? (
+                            <img
+                              src={URL.createObjectURL(room.images[0])}
+                              alt={room.roomType}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <span className="text-gray-400 text-sm">
+                              No Room Image
+                            </span>
+                          )}
                         </div>
-                      ))}
-                    </div>
+                        <div className="text-center">
+                          <h3 className="text-lg font-bold text-gray-800">
+                            {room.roomType}
+                          </h3>
+                          <label className="block">
+                            <input
+                              type="file"
+                              multiple
+                              accept="image/*"
+                              onChange={(e) =>
+                                handleHotelImages(index, e.target.files)
+                              }
+                              className="w-full rounded-lg border border-gray-300 bg-white text-sm text-gray-600 file:mr-3 file:rounded-lg file:border-0 file:bg-teal-600 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-teal-700"
+                            />
+                          </label>
+                          {room.images?.length > 0 && (
+                            <p className="mb-2 text-xs text-gray-500">
+                              {room.images.length} image(s) selected
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
+
                 <div className="form-section">
                   <div className="form-group">
-                    <label>Property Images</label>
+                    <label>Property Images *</label>
                     {renderFormError("images")}
                     <input
                       type="file"
                       name="images"
                       onChange={handleChange}
-                      className="  w-full mt-2  rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-600 
-    focus:outline-none focus:ring-2 focus:ring-teal-500 file:mr-4 file:rounded-lg  file:border-0 file:bg-teal-600 file:px-4 file:py-2
-  file:text-sm file:font-semibold file:text-white "
                       multiple
                       accept="image/*"
+                      className="w-full mt-2 rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-teal-500 file:mr-4 file:rounded-lg file:border-0 file:bg-teal-600 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white"
                     />
                     <small style={{ color: "#666", fontSize: "12px" }}>
-                      You can select multiple images. Supported formats: JPG,
-                      PNG, WebP
+                      Multiple images allowed (JPG, PNG, WebP)
                     </small>
-                    {formData.images && formData.images.length > 0 && (
+                    {formData.images.length > 0 && (
                       <div style={{ marginTop: "8px", color: "#007bff" }}>
                         {formData.images.length} file(s) selected
                       </div>
                     )}
                   </div>
-                  {propertyType === "Hotel" && (
-                    <div className="form-group">
-                      <label>Business License Documents</label>
-                      <input
-                        type="file"
-                        name="businessLicense"
-                        onChange={handleChange}
-                        multiple
-                        className=" w-full  rounded-lg border border-gray-300
-                  bg-white  text-sm text-gray-600
-                  file:mr-3 file:rounded-lg file:border-0
-                  file:bg-teal-600 file:px-4 file:py-2
-                  file:text-sm file:font-semibold file:text-white
-                  hover:file:bg-teal-700 "
-                        accept=".pdf,image/*"
-                      />
-                      <small style={{ color: "#666", fontSize: "12px" }}>
-                        Upload business license, registration documents, etc.
-                        Supported formats: PDF, JPG, PNG
-                      </small>
-                      {formData.businessLicense &&
-                        formData.businessLicense.length > 0 && (
-                          <div style={{ marginTop: "8px", color: "#007bff" }}>
-                            {formData.businessLicense.length} file(s) selected
-                          </div>
-                        )}
-                    </div>
-                  )}
-                  <div
-                    className="form-summary"
-                    style={{
-                      backgroundColor: "#f8f9fa",
-                      padding: "20px",
-                      borderRadius: "8px",
-                      marginTop: "20px",
-                    }}
-                  >
-                    <h3>Property Summary</h3>
-                    <div
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns:
-                          "repeat(auto-fit, minmax(200px, 1fr))",
-                        gap: "10px",
-                      }}
-                    >
-                      <div>
-                        <strong
-                          style={{
-                            color: "#008b8b",
-                            fontSize: "18px",
-                            textTransform: "uppercase",
-                            fontFamily: "Courier, monospace",
-                          }}
-                        >
-                          Name:
-                        </strong>{" "}
-                        {formData.name || "Not provided"}
-                      </div>
-                      <div>
-                        <strong
-                          style={{
-                            color: "#008b8b",
-                            fontSize: "18px",
-                            textTransform: "uppercase",
-                            fontFamily: "Courier, monospace",
-                          }}
-                        >
-                          Type:
-                        </strong>{" "}
-                        {propertyType}{" "}
-                        {propertyType === "Hotel" ? `(${formData.type})` : ""}
-                      </div>
-                      <div>
-                        <strong
-                          style={{
-                            color: "#008b8b",
-                            fontSize: "18px",
-                            textTransform: "uppercase",
-                            fontFamily: "Courier, monospace",
-                          }}
-                        >
-                          City:
-                        </strong>{" "}
-                        {formData.city || "Not provided"}
-                      </div>
-                      <div>
-                        <strong
-                          style={{
-                            color: "#008b8b",
-                            fontSize: "18px",
-                            textTransform: "uppercase",
-                            fontFamily: "Courier, monospace",
-                          }}
-                        >
-                          Contact:
-                        </strong>{" "}
-                        {formData.contactNumber || "Not provided"}
-                      </div>
-                      {propertyType === "Hotel" && <></>}
-                      {/* {propertyType === "Banquet" && (
-                          <>
-                            <div>
-                              <strong
-                                style={{
-                                  color: "#008b8b",
-                                  fontSize: "18px",
-                                  textTransform: "uppercase",
-                                  fontFamily: "Courier, monospace",
-                                }}
-                              >
-                                Capacity:
-                              </strong>{" "}
-                              {formData.capacity || "Not provided"}
-                            </div>
-                            <div>
-                              <strong
-                                style={{
-                                  color: "#008b8b",
-                                  fontSize: "18px",
-                                  textTransform: "uppercase",
-                                  fontFamily: "Courier, monospace",
-                                }}
-                              >
-                                Price Per Event:
-                              </strong>{" "}
-                              ₹{formData.pricePerEvent || "Not provided"}
-                            </div>
-                          </>
-                        )} */}
 
-                      <div>
-                        <strong
-                          style={{
-                            color: "#008b8b",
-                            fontSize: "18px",
-                            textTransform: "uppercase",
-                            fontFamily: "Courier, monospace",
-                          }}
-                        >
-                          Location:
-                        </strong>{" "}
-                        {formData.latitude && formData.longitude
-                          ? `${formData.latitude}, ${formData.longitude}`
-                          : "Not provided"}
-                      </div>
-                    </div>
+                  <div className="form-group">
+                    <label>Business License Documents</label>
+                    <input
+                      type="file"
+                      name="businessLicense"
+                      onChange={handleChange}
+                      multiple
+                      accept=".pdf,image/*"
+                      className="w-full rounded-lg border border-gray-300 bg-white text-sm text-gray-600 file:mr-3 file:rounded-lg file:border-0 file:bg-teal-600 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-teal-700"
+                    />
                   </div>
                 </div>
               </div>
             )}
 
+            {/* Step 2 - Banquet */}
             {currentStep === 2 && propertyType === "Banquet" && (
-              <div className="form-section ">
-                <div className="room-types-wrapper">
-                  <div className="form-section">
-                    <h2 className="text-2xl font-bold text-gray-800 mb-4">
-                      Banquet Event Types
-                    </h2>
-                    {/* Select Event */}
-                    {renderFormError("events")}
-                    <div className="flex items-center gap-3 mb-6">
-                      <select
-                        value={selectedEventType}
-                        onChange={(e) => setSelectedEventType(e.target.value)}
-                        className="w-1/2 rounded-xl border text-[#008b8b] font-semibold border-gray-300 px-4 py-2 text-sm focus:ring-2 focus:ring-teal-500"
-                      >
-                        <option value="">Select event type</option>
-                        {EventsTypes.map((type) => (
-                          <option key={type} value={type}>
-                            {type}
-                          </option>
-                        ))}
-                      </select>
+              <div className="form-section">
+                <h2 className="text-2xl font-bold text-gray-800 mb-4">
+                  Banquet Event Types
+                </h2>
+                {renderFormError("events")}
+                <div className="flex items-center gap-3 mb-6">
+                  <select
+                    value={selectedEventType}
+                    onChange={(e) => setSelectedEventType(e.target.value)}
+                    className="w-1/2 rounded-xl border text-[#008b8b] font-semibold border-gray-300 px-4 py-2 text-sm focus:ring-2 focus:ring-teal-500"
+                  >
+                    <option value="">Select event type</option>
+                    {EventsTypes.map((type) => (
+                      <option key={type} value={type}>
+                        {type}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={addBanquetEvent}
+                    className="rounded-xl bg-teal-600 px-6 py-2 text-sm font-semibold text-white hover:bg-teal-700"
+                  >
+                    + Add Event
+                  </button>
+                </div>
 
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {banquetEvents.map((event, index) => (
+                    <div
+                      key={index}
+                      className="relative rounded-2xl bg-white shadow-md hover:shadow-xl transition overflow-hidden"
+                    >
                       <button
                         type="button"
-                        onClick={addBanquetEvent}
-                        className="rounded-xl bg-teal-600 px-6 py-2 text-sm font-semibold text-white hover:bg-teal-700"
+                        onClick={() => removeBanquetEvent(index)}
+                        className="absolute top-2 right-2 h-8 w-8 rounded-full bg-red-500 text-white font-bold hover:bg-red-600"
                       >
-                        + Add Event
+                        ×
                       </button>
+                      <div className="h-30 bg-gray-100 flex items-center justify-center">
+                        {event.images?.length > 0 ? (
+                          <img
+                            src={URL.createObjectURL(event.images[0])}
+                            alt={event.eventType}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-gray-400 text-sm">
+                            No Image Selected
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-center">
+                        <h3 className="text-lg font-bold text-gray-800">
+                          {event.eventType}
+                        </h3>
+                        <label className="block">
+                          <input
+                            type="file"
+                            multiple
+                            accept="image/*"
+                            onChange={(e) =>
+                              handleBanquetImages(index, e.target.files)
+                            }
+                            className="w-full cursor-pointer rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-600 file:mr-3 file:rounded-lg file:border-0 file:bg-teal-600 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-teal-700"
+                          />
+                        </label>
+                        {event.images?.length > 0 && (
+                          <p className="p-1 text-xs text-gray-500">
+                            {event.images.length} image(s) selected
+                          </p>
+                        )}
+                      </div>
                     </div>
-
-                    {/* Event Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {banquetEvents.map((event, index) => (
-                        <div
-                          key={index}
-                          className="relative rounded-2xl bg-white shadow-md hover:shadow-xl transition overflow-hidden"
-                        >
-                          {/* Remove Button */}
-                          <button
-                            type="button"
-                            onClick={() => removeBanquetEvent(index)}
-                            className="absolute top-2 right-2 h-8 w-8 rounded-full bg-red-500 text-white font-bold hover:bg-red-600"
-                          >
-                            ×
-                          </button>
-
-                          {/* Image Preview */}
-                          <div className="h-30 bg-gray-100 flex items-center justify-center">
-                            {event.images?.length > 0 ? (
-                              <img
-                                src={URL.createObjectURL(event.images[0])}
-                                alt={event.eventType}
-                                className="h-full w-full object-cover"
-                              />
-                            ) : (
-                              <span className="text-gray-400 text-sm">
-                                No Image Selected
-                              </span>
-                            )}
-                          </div>
-
-                          {/* Card Content */}
-                          <div className=" text-center">
-                            <h3 className="text-lg font-bold text-gray-800 ">
-                              {event.eventType}
-                            </h3>
-
-                            <label className="block">
-                              <input
-                                type="file"
-                                multiple
-                                accept="image/*"
-                                onChange={(e) =>
-                                  handleBanquetImages(index, e.target.files)
-                                }
-                                className="
-                w-full cursor-pointer rounded-lg border border-gray-300
-                bg-white px-3 py-2 text-sm text-gray-600
-                file:mr-3 file:rounded-lg file:border-0
-                file:bg-teal-600 file:px-4 file:py-2
-                file:text-sm file:font-semibold file:text-white
-                hover:file:bg-teal-700
-              "
-                              />
-                            </label>
-
-                            {event.images?.length > 0 && (
-                              <p className="p-1 text-xs text-gray-500">
-                                {event.images.length} image(s) selected
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                  ))}
                 </div>
 
                 <div className="form-section mt-5">
-                  {/* <h2>Upload Documents & Images</h2> */}
                   <div className="form-group">
-                    <label className="text-lg">Banquet Images</label>
+                    <label className="text-lg">Banquet Images *</label>
                     {renderFormError("images")}
-
                     <input
                       type="file"
-                      name="images" // ✅ THIS LINE WAS MISSING
+                      name="images"
                       multiple
                       accept="image/*"
                       onChange={handleChange}
-                      className="
-    w-full  cursor-pointer rounded-xl
-    border border-gray-300 bg-white
-    px-3 py-2 text-sm text-gray-600
-    shadow-sm transition
-    hover:border-teal-500 hover:shadow-md
-    focus:outline-none focus:ring-2 focus:ring-teal-500
-
-    file:mr-4
-    file:rounded-lg
-    file:border-0
-    file:bg-teal-600
-    file:px-4 file:py-2
-    file:text-sm file:font-semibold
-    file:text-white
-    hover:file:bg-teal-700
-  "
+                      className="w-full cursor-pointer rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-600 shadow-sm transition hover:border-teal-500 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-teal-500 file:mr-4 file:rounded-lg file:border-0 file:bg-teal-600 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-teal-700"
                     />
                     <small style={{ color: "#666", fontSize: "12px" }}>
-                      You can select multiple images. Supported formats: JPG,
-                      PNG, WebP
+                      Multiple images allowed (JPG, PNG, WebP)
                     </small>
-                    {formData.images && formData.images.length > 0 && (
+                    {formData.images.length > 0 && (
                       <div style={{ marginTop: "8px", color: "#007bff" }}>
                         {formData.images.length} file(s) selected
                       </div>
                     )}
                   </div>
-                  {propertyType === "Hotel" && (
-                    <div className="form-group">
-                      <label>Business License Documents</label>
-                      <input
-                        type="file"
-                        name="businessLicense"
-                        onChange={handleChange}
-                        multiple
-                        accept=".pdf,image/*"
-                      />
-                      <small style={{ color: "#666", fontSize: "12px" }}>
-                        Upload business license, registration documents, etc.
-                        Supported formats: PDF, JPG, PNG
-                      </small>
-                      {formData.businessLicense &&
-                        formData.businessLicense.length > 0 && (
-                          <div style={{ marginTop: "8px", color: "#007bff" }}>
-                            {formData.businessLicense.length} file(s) selected
-                          </div>
-                        )}
-                    </div>
-                  )}
-                  <div
-                    className="form-summary"
-                    style={{
-                      backgroundColor: "#f8f9fa",
-                      padding: "20px",
-                      borderRadius: "8px",
-                      marginTop: "20px",
-                    }}
-                  >
-                    <h3>Property Summary</h3>
-                    <div
-                      // style={{
-                      //   display: "",
-                      //   gridTemplateColumns:
-                      //     "repeat(auto-fit, minmax(200px, 1fr))",
-                      //   gap: "10px",
-                      // }}
-                      className="grid grid-cols-5"
-                    >
-                      <div>
-                        <strong
-                          style={{
-                            color: "#008b8b",
-                            fontSize: "18px",
-                            textTransform: "uppercase",
-                            fontFamily: "Courier, monospace",
-                          }}
-                        >
-                          Name:
-                        </strong>{" "}
-                        {formData.name || "Not provided"}
-                      </div>
-                      <div>
-                        <strong
-                          style={{
-                            color: "#008b8b",
-                            fontSize: "18px",
-                            textTransform: "uppercase",
-                            fontFamily: "Courier, monospace",
-                          }}
-                        >
-                          Type:
-                        </strong>{" "}
-                        {propertyType}{" "}
-                        {propertyType === "Hotel" ? `(${formData.type})` : ""}
-                      </div>
-                      <div>
-                        <strong
-                          style={{
-                            color: "#008b8b",
-                            fontSize: "18px",
-                            textTransform: "uppercase",
-                            fontFamily: "Courier, monospace",
-                          }}
-                        >
-                          City:
-                        </strong>{" "}
-                        {formData.city || "Not provided"}
-                      </div>
-                      <div>
-                        <strong
-                          style={{
-                            color: "#008b8b",
-                            fontSize: "18px",
-                            textTransform: "uppercase",
-                            fontFamily: "Courier, monospace",
-                          }}
-                        >
-                          Contact:
-                        </strong>{" "}
-                        {formData.contactNumber || "Not provided"}
-                      </div>
-                      {propertyType === "Hotel" && (
-                        <>
-                          {/* <div>
-                          <strong
-                            style={{
-                              color: "#008b8b",
-                              fontSize: "18px",
-                              textTransform: "uppercase",
-                              fontFamily: "Courier, monospace",
-                            }}
-                          >
-                            Total Rooms:
-                          </strong>{" "}
-                          {formData.totalRooms || "Not provided"}
-                        </div> */}
-                          {/* <div>
-                          <strong
-                            style={{
-                              color: "#008b8b",
-                              fontSize: "18px",
-                              textTransform: "uppercase",
-                              fontFamily: "Courier, monospace",
-                            }}
-                          >
-                            Total Beds:
-                          </strong>{" "}
-                          {formData.totalBeds || "Not provided"}
-                        </div> */}
-                        </>
-                      )}
-
-                      {/* <div>
-                      <strong
-                        style={{
-                          color: "#008b8b",
-                          fontSize: "18px",
-                          textTransform: "uppercase",
-                          fontFamily: "Courier, monospace",
-                        }}
-                      >
-                        Amenities:
-                      </strong>{" "}
-                      {formData.amenities.length} selected
-                    </div> */}
-                      <div>
-                        <strong
-                          style={{
-                            color: "#008b8b",
-                            fontSize: "18px",
-                            textTransform: "uppercase",
-                            fontFamily: "Courier, monospace",
-                          }}
-                        >
-                          Location:
-                        </strong>{" "}
-                        {formData.latitude && formData.longitude
-                          ? `${formData.latitude}, ${formData.longitude}`
-                          : "Not provided"}
-                      </div>
-                    </div>
-                  </div>
                 </div>
               </div>
             )}
+
             <div
               className="form-navigation"
               style={{

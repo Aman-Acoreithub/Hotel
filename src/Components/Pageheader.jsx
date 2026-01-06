@@ -193,8 +193,7 @@ const Pageheader = ({ path }) => {
     { path: '/faq', label: 'Faq' },
     { path: '/residential', label: 'Residential' },
     { path: '/commercial', label: 'Commercial' },
-    { path: '/termsandcondition', label: 'Terms and Conditions' },
-    { path: '/privacyandpolicy', label: 'Privacy' },
+   
   ];
 
   return (
@@ -333,9 +332,7 @@ const Pageheader = ({ path }) => {
             <li><Link to="/reels" onClick={() => setMenuOpen(false)}>Reel</Link></li>
             <li><Link to="/subscription" onClick={() => setMenuOpen(false)}>subscription</Link></li>
             <li><Link to="/userprofile" onClick={() => setMenuOpen(false)}>Profile</Link></li>
-            <li><Link to="/termsandcondition" onClick={() => setMenuOpen(false)}>Terms and Conditions</Link></li>
-            <li><Link to="/privacyandpolicy" onClick={() => setMenuOpen(false)}>Privacy</Link></li>
-
+          
             <li>
               <div
                 className="user-location-container"

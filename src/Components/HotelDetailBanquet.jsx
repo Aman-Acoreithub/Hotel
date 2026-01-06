@@ -766,6 +766,13 @@ const HotelDetails = () => {
                         </span>
                       </div>
                     </div>
+                    <p className="text-3xl font-bold mb-2 ">
+                   
+                      {/* // price */}
+                      <span className="text-gray-900">
+                        Price: {  data.price} /-
+                      </span>
+                    </p>
                     <div className="mt-1 flex items-center text-gray-600">
                       <FontAwesomeIcon
                         icon={faMapMarkerAlt}
@@ -1020,7 +1027,6 @@ const HotelDetails = () => {
               <h2 className="text-2xl font-bold text-gray-900">
                 Room Types ({property?.rooms?.length || 0})
               </h2>
-            
             </div>
 
             {(() => {
@@ -1057,73 +1063,87 @@ const HotelDetails = () => {
               } else {
                 return (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-  {property?.rooms?.map((room, index) => {
-    const roomName = room.roomType || `Room ${index + 1}`;
-    const roomImage = room.images?.[0] || DefaultImage;
-    const price = room.price ? `₹${room.price}` : 'Price on request';
-    const capacity = room.capacity || 'N/A';
-    const amenities = room.amenities?.slice(0, 3) || [];
+                    {property?.rooms?.map((room, index) => {
+                      const roomName = room.roomType || `Room ${index + 1}`;
+                      const roomImage = room.images?.[0] || DefaultImage;
+                      const price = room.price
+                        ? `₹${room.price}`
+                        : "Price on request";
+                      const capacity = room.capacity || "N/A";
+                      const amenities = room.amenities?.slice(0, 3) || [];
 
-    return (
-      <div
-        key={room._id || index}
-        className="group relative bg-white rounded-2xl shadow-lg hover:shadow-2xl overflow-hidden transition-all duration-500 transform hover:-translate-y-2"
-      >
-        {/* Image Container with Overlay */}
-        <div className="relative h-56 overflow-hidden">
-          <img
-            src={roomImage}
-            alt={roomName}
-            className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
-            onError={(e) => (e.currentTarget.src = DefaultImage)}
-          />
-          
-          {/* Gradient Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
-          
-          {/* Room Type Badge */}
-          <div className="absolute top-4 left-4">
-            <span className="bg-gradient-to-r from-blue-600 to-teal-500 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg">
-              {roomName}
-            </span>
-          </div>
-          
-          {/* Hover Indicator */}
-          <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 animate-pulse">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
-              </svg>
-            </div>
-          </div>
-        </div>
+                      return (
+                        <div
+                          key={room._id || index}
+                          className="group relative bg-white rounded-2xl shadow-lg hover:shadow-2xl overflow-hidden transition-all duration-500 transform hover:-translate-y-2"
+                        >
+                          {/* Image Container with Overlay */}
+                          <div className="relative h-56 overflow-hidden">
+                            <img
+                              src={roomImage}
+                              alt={roomName}
+                              className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
+                              onError={(e) =>
+                                (e.currentTarget.src = DefaultImage)
+                              }
+                            />
 
-        {/* Content Area */}
-        <div className="p-6">
-          {/* Title with Icon */}
-          <div className="flex items-center ">
-            <div className="p-2 bg-gradient-to-r from-blue-100 to-teal-100 rounded-lg mr-3">
-              <FontAwesomeIcon icon={faBed} className="text-blue-600 text-lg" />
-            </div>
-            <h3 className="text-xl font-bold text-gray-900 group-hover:text-blue-700 transition-colors">
-              {roomName}
-            </h3>
-          </div>
+                            {/* Gradient Overlay */}
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
 
-        
+                            {/* Room Type Badge */}
+                            <div className="absolute top-4 left-4">
+                              <span className="bg-gradient-to-r from-blue-600 to-teal-500 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg">
+                                {roomName}
+                              </span>
+                            </div>
 
-        </div>
+                            {/* Hover Indicator */}
+                            <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                              <div className="bg-white/20 backdrop-blur-sm rounded-full p-2 animate-pulse">
+                                <svg
+                                  className="w-6 h-6 text-white"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    d="M9 5l7 7-7 7"
+                                  ></path>
+                                </svg>
+                              </div>
+                            </div>
+                          </div>
 
-        {/* Decorative Corner */}
-        <div className="absolute top-0 right-0 w-16 h-16 overflow-hidden">
-          <div className="absolute transform rotate-45 bg-gradient-to-r from-blue-500 to-teal-500 text-white text-xs font-bold py-1 w-24 text-center -right-8 top-4">
-            Room
-          </div>
-        </div>
-      </div>
-    );
-  })}
-</div>
+                          {/* Content Area */}
+                          <div className="p-6">
+                            {/* Title with Icon */}
+                            <div className="flex items-center ">
+                              <div className="p-2 bg-gradient-to-r from-blue-100 to-teal-100 rounded-lg mr-3">
+                                <FontAwesomeIcon
+                                  icon={faBed}
+                                  className="text-blue-600 text-lg"
+                                />
+                              </div>
+                              <h3 className="text-xl font-bold text-gray-900 group-hover:text-blue-700 transition-colors">
+                                {roomName}
+                              </h3>
+                            </div>
+                          </div>
+
+                          {/* Decorative Corner */}
+                          <div className="absolute top-0 right-0 w-16 h-16 overflow-hidden">
+                            <div className="absolute transform rotate-45 bg-gradient-to-r from-blue-500 to-teal-500 text-white text-xs font-bold py-1 w-24 text-center -right-8 top-4">
+                              Room
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 );
               }
             })()}
@@ -1173,7 +1193,6 @@ const HotelDetails = () => {
                       />
                       {/* Gradient Overlay */}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
-
                       {/* Event Type Badge */}
                       <div className="absolute top-4 left-4">
                         <span className="bg-gradient-to-r from-purple-600 to-pink-500 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg">
@@ -1183,9 +1202,7 @@ const HotelDetails = () => {
 
                       {/* View More Indicator */}
                       <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <div className="bg-white/20 backdrop-blur-sm rounded-full p-2">
-                         
-                        </div>
+                        <div className="bg-white/20 backdrop-blur-sm rounded-full p-2"></div>
                       </div>
                     </div>
 
@@ -1207,15 +1224,23 @@ const HotelDetails = () => {
                             ></path>
                           </svg>
                         </div>
-                        <h3 className="text-xl font-bold text-gray-900 group-hover:text-purple-700 transition-colors">
-                          {eventName} Event
-                        </h3>
+                        <div className="flex items-center gap-3  justify-between ">
+                          <h3 className="text-xl font-bold text-gray-900 group-hover:text-purple-700 transition-colors">
+                            {eventName} Event
+                          </h3>
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        {/* BASE PRICE */}
+                       
+                        {/* SEASONAL PRICES */}
+                       
                       </div>
 
                       {/* Description */}
-                      {event.description && (
+                      {event.pricePerPlate && (
                         <p className="text-gray-600 mb-6 line-clamp-3">
-                          {event.description}
+                          {event.pricePerPlate}
                         </p>
                       )}
 

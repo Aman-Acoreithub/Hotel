@@ -466,7 +466,7 @@ function CreateReel({ addReel }) {
 
               <div className="cr-actions">
                 <button className="cr-btn primary" type="submit" disabled={isLoading}>
-                  {isLoading ? "Uploading..." : "Upload Reel"}
+                  {isLoading ? "Uploading..." : "Upload Reels"}
                 </button>
               </div>
             </form>
