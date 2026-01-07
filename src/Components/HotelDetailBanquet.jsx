@@ -770,7 +770,7 @@ const HotelDetails = () => {
                    
                       {/* // price */}
                       <span className="text-gray-900">
-                        Price: {  data.price} /-
+                        Price: {  data.price} {data.pricePerPlate}/-
                       </span>
                     </p>
                     <div className="mt-1 flex items-center text-gray-600">
@@ -801,10 +801,11 @@ const HotelDetails = () => {
                     {startingPrice > 0 && (
                       <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl px-4 py-2">
                         <span className="text-lg font-bold text-blue-700">
-                          {type === "Hotel"
+                          {type === "banquet"
                             ? `From ₹${startingPrice}`
                             : `₹${startingPrice}/plate`}
                         </span>
+                        
                       </div>
                     )}
                     {shouldShowTimer && (

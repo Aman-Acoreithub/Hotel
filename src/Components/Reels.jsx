@@ -99,37 +99,89 @@ const Reels = () => {
   };
 
   // Fetch reels
-  const fetchReels = async () => {
-    const userId = getUserIdFromToken();
-    if (!userId) {
-      setError("User not logged in");
-      return;
-    }
+  // const fetchReels = async () => {
+  //   const userId = getUserIdFromToken();
+  //   if (!userId) {
+  //     setError("User not logged in");
+  //     return;
+  //   }
 
-    setLoading(true);
-    try {
-      const res = await axios.get(
-        `https://hotel-banquet.nearprop.in/api/reels/user/${userId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+  //   setLoading(true);
+  //   try {
+  //     const res = await axios.get(
+  //       `https://hotel-banquet.nearprop.in/api/reels/user/${userId}`,
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //         },
+  //       }
+  //     );
 
-      if (res.data.success) {
-        const reelsData = res.data.data?.reels || res.data.data || [];
-        setReels(reelsData);
-        setMyReels(reelsData);
-      } else {
-        setReels([]);
+  //     if (res.data.success) {
+  //       const reelsData = res.data.data?.reels || res.data.data || [];
+  //       setReels(reelsData);
+  //       setMyReels(reelsData);
+  //     } else {
+  //       setReels([]);
+  //     }
+  //   } catch (error) {
+  //     setError(error.response?.data?.message || "Failed to load user reels");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+  // Fetch reels - UPDATED VERSION
+const fetchReels = async () => {
+  const userId = getUserIdFromToken();
+  if (!userId) {
+    setError("User not logged in");
+    return;
+  }
+
+  setLoading(true);
+  try {
+    const res = await axios.get(
+      `https://hotel-banquet.nearprop.in/api/reels/user/${userId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       }
-    } catch (error) {
-      setError(error.response?.data?.message || "Failed to load user reels");
-    } finally {
-      setLoading(false);
+    );
+
+    if (res.data.success) {
+      const reelsData = res.data.data?.reels || res.data.data || [];
+      
+      // Normalize reel data to ensure stats exist
+      const normalizedReels = reelsData.map(reel => ({
+        ...reel,
+        // Ensure stats object exists with proper defaults
+        stats: reel.stats || {
+          likesCount: reel.likesCount || 0,
+          commentsCount: reel.commentsCount || 0,
+          sharesCount: reel.sharesCount || 0,
+        },
+        // Ensure isLiked property exists (backend might send this as likedByUser or similar)
+        isLiked: reel.isLiked || reel.likedByUser || reel.liked || false,
+        // Ensure other properties have defaults
+        progress: reel.progress || 0,
+        showHeart: reel.showHeart || false,
+        comments: reel.comments || [],
+        newComment: reel.newComment || '',
+      }));
+      
+      setReels(normalizedReels);
+      setMyReels(normalizedReels);
+    } else {
+      setReels([]);
     }
-  };
+  } catch (error) {
+    setError(error.response?.data?.message || "Failed to load user reels");
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleVideoPlay = (reelId) => {
     Object.entries(videoRefs.current).forEach(([id, video]) => {
@@ -303,34 +355,68 @@ const Reels = () => {
   };
 
   // Toggle like (API call)
-  const toggleLike = async (reelId) => {
-    try {
-      await axios.post(
-        `https://hotel-banquet.nearprop.in/api/reels/${reelId}/like`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+  // const toggleLike = async (reelId) => {
+  //   try {
+  //     await axios.post(
+  //       `https://hotel-banquet.nearprop.in/api/reels/${reelId}/like`,
+  //       {},
+  //       { headers: { Authorization: `Bearer ${token}` } }
+  //     );
 
-      setReels((prev) =>
-        prev.map((reel) =>
-          reel._id === reelId
-            ? {
-                ...reel,
-                stats: {
-                  ...reel.stats,
-                  likesCount: reel.isLiked
-                    ? reel.stats.likesCount - 1
-                    : reel.stats.likesCount + 1,
-                },
-                isLiked: !reel.isLiked,
-              }
-            : reel
-        )
-      );
-    } catch (error) {
-      setError(error.response?.data?.message || "Failed to toggle like.");
-    }
-  };
+  //     setReels((prev) =>
+  //       prev.map((reel) =>
+  //         reel._id === reelId
+  //           ? {
+  //               ...reel,
+  //               stats: {
+  //                 ...reel.stats,
+  //                 likesCount: reel.isLiked
+  //                   ? reel.stats.likesCount - 1
+  //                   : reel.stats.likesCount + 1,
+  //               },
+  //               isLiked: !reel.isLiked,
+  //             }
+  //           : reel
+  //       )
+  //     );
+  //   } catch (error) {
+  //     setError(error.response?.data?.message || "Failed to toggle like.");
+  //   }
+  // };
+
+  const toggleLike = async (reelId) => {
+  try {
+    await axios.post(
+      `https://hotel-banquet.nearprop.in/api/reels/${reelId}/like`,
+      {},
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    setReels((prev) =>
+      prev.map((reel) => {
+        if (reel._id === reelId) {
+          // Safely access properties with default values
+          const currentStats = reel.stats || {};
+          const currentLikesCount = currentStats.likesCount || 0;
+          const currentIsLiked = reel.isLiked || false;
+          
+          return {
+            ...reel,
+            stats: {
+              ...currentStats,
+              likesCount: currentIsLiked ? currentLikesCount - 1 : currentLikesCount + 1,
+            },
+            isLiked: !currentIsLiked,
+          };
+        }
+        return reel;
+      })
+    );
+  } catch (error) {
+    setError(error.response?.data?.message || "Failed to toggle like.");
+  }
+};
+
 
   // Add comment
   const addComment = async (reelId, commentText) => {
@@ -373,20 +459,21 @@ const Reels = () => {
           createdAt: newCommentRaw.createdAt || new Date().toISOString(),
         };
 
-        setReels((prev) =>
-          prev.map((reel) =>
-            reel._id === reelId
-              ? {
-                  ...reel,
-                  stats: {
-                    ...reel.stats,
-                    commentsCount: (reel.stats?.commentsCount || 0) + 1,
-                  },
-                  comments: [...(reel.comments || []), newComment],
-                }
-              : reel
-          )
-        );
+      setReels((prev) =>
+  prev.map((reel) =>
+    reel._id === reelId
+      ? {
+          ...reel,
+          stats: {
+            ...(reel.stats ?? {}), // ✅ SAFE
+            commentsCount: ((reel.stats?.commentsCount) ?? 0) + 1,
+          },
+          comments: [...(reel.comments ?? []), newComment],
+        }
+      : reel
+  )
+);
+
 
         setReelComments((prev) => ({
           ...prev,
@@ -443,7 +530,7 @@ const Reels = () => {
         `✅ Uploaded successfully: ${res.data.message || "Reel added!"}`
       );
       setShowPopup(false);
-      toast.success("Reel uploaded");
+      // toast.success("Reel uploaded");
       setTitle("");
       setVideo(null);
       setHotelId("");
@@ -770,7 +857,7 @@ const Reels = () => {
                       <FaShare />
                     </span>
                     <span className="reel-count">
-                      {reel.stats?.sharesCount || 0}
+                      {/* {reel.stats?.sharesCount || 0} */}
                     </span>
                   </div>
 
