@@ -769,9 +769,14 @@ const HotelDetails = () => {
                     <p className="text-3xl font-bold mb-2 ">
                    
                       {/* // price */}
-                      <span className="text-gray-900">
-                        Price: {  data.price} {data.pricePerPlate}/-
-                      </span>
+                   <span className="text-gray-900">
+  Price:{" "}
+  {type === "Hotel"
+    ? `₹${data.price}`
+    : `₹${data.pricePerPlate}`}
+  /-
+</span>
+
                     </p>
                     <div className="mt-1 flex items-center text-gray-600">
                       <FontAwesomeIcon

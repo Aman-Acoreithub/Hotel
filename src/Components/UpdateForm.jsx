@@ -49,6 +49,7 @@ const UpdateForm = () => {
     gstNumber: "",
     hallType: "",
     capacity: "",
+    price: "",
    
     amenities: [],
     eventTypes: [],
@@ -59,7 +60,7 @@ const UpdateForm = () => {
   });
 
   const [roomTypes, setRoomTypes] = useState([
-    { name: "", pricePerNight: "", capacity: "", description: "", amenities: [] }
+    { name: "", Price: "", capacity: "", description: "", amenities: [] }
   ]);
 
   const [existingImages, setExistingImages] = useState([]);
@@ -107,6 +108,7 @@ const UpdateForm = () => {
           registrationTime: data.registrationTime,
           registrationNumber: data.registrationNumber || "",
           gst: data.gst || "",
+          price: data.price || "",
           gstNumber: data.gstNumber || "",
           hallType: data.hallType || "",
           capacity: data.capacity?.toString() || "",
@@ -126,7 +128,7 @@ const UpdateForm = () => {
           const rooms = (Array.isArray(data.roomTypes) ? data.roomTypes : JSON.parse(data.roomTypes || "[]"))
             .map((room) => ({
               name: room.name || "",
-              pricePerNight: room.pricePerNight?.toString() || "",
+              Price: room.Price?.toString() || "",
               capacity: room.capacity?.toString() || "",
               description: room.description || "",
               amenities: Array.isArray(room.amenities)
@@ -135,7 +137,7 @@ const UpdateForm = () => {
                 ? JSON.parse(room.amenities || "[]")
                 : [],
             }));
-          setRoomTypes(rooms.length > 0 ? rooms : [{ name: "", pricePerNight: "", capacity: "", description: "", amenities: [] }]);
+          setRoomTypes(rooms.length > 0 ? rooms : [{ name: "", Price: "", capacity: "", description: "", amenities: [] }]);
         }
       } catch (err) {
         console.error("Fetch error:", err);
@@ -180,7 +182,7 @@ const UpdateForm = () => {
   };
 
   const addRoomType = () => {
-    setRoomTypes([...roomTypes, { name: "", pricePerNight: "", capacity: "", description: "", amenities: [] }]);
+    setRoomTypes([...roomTypes, { name: "", Price: "", capacity: "", description: "", amenities: [] }]);
   };
 
   const removeRoomType = (index) => {
@@ -214,22 +216,39 @@ const UpdateForm = () => {
           : `${API_CONFIG.baseUrl}/api/banquet-halls/${id}`;
 
       const form = new FormData();
+form.append("price", formData.price);
+console.log("PRICE SENT:", formData.price);
 
+      // Object.entries(formData).forEach(([key, value]) => {
+      //   if (["userId", "_id", "createdAt", "updatedAt", "images", "registrationTime"].includes(key)) return;
+
+      //   if (["amenities", "eventTypes", "cateringOptions"].includes(key)) {
+      //     form.append(key, JSON.stringify(value));
+      //   } else if (typeof value === "boolean") {
+      //     form.append(key, value ? "true" : "false");
+      //   } else if (value !== "" && value != null) {
+      //     form.append(key, value);
+      //   }
+      // });
       Object.entries(formData).forEach(([key, value]) => {
-        if (["userId", "_id", "createdAt", "updatedAt", "images", "registrationTime"].includes(key)) return;
+  if (
+    ["userId", "_id", "createdAt", "updatedAt", "images", "registrationTime", "price"].includes(key)
+  )
+    return;
 
-        if (["amenities", "eventTypes", "cateringOptions"].includes(key)) {
-          form.append(key, JSON.stringify(value));
-        } else if (typeof value === "boolean") {
-          form.append(key, value ? "true" : "false");
-        } else if (value !== "" && value != null) {
-          form.append(key, value);
-        }
-      });
+  if (["amenities", "eventTypes", "cateringOptions"].includes(key)) {
+    form.append(key, JSON.stringify(value));
+  } else if (typeof value === "boolean") {
+    form.append(key, value ? "true" : "false");
+  } else if (value !== "" && value != null) {
+    form.append(key, value);
+  }
+});
+
 
       if (type === "Hotel") {
         const validRooms = roomTypes.filter(
-          (r) => r.name.trim() || r.pricePerNight || r.capacity || r.description || r.amenities.length > 0
+          (r) => r.name.trim() || r.Price || r.capacity || r.description || r.amenities.length > 0
         );
         form.append("roomTypes", JSON.stringify(validRooms));
       }
@@ -430,6 +449,27 @@ const UpdateForm = () => {
                       className="form-input"
                     />
                   </div>
+                  <div>
+                    {/* Price */}
+                    <div className="form-group">
+                      <label className="form-label">Price </label>
+<input
+  type="number"
+  min="0"
+  name="price"
+  value={formData.price}
+  onChange={(e) =>
+    setFormData((prev) => ({
+      ...prev,
+      price: Number(e.target.value), // ✅ number
+    }))
+  }
+/>
+
+
+                    </div>
+
+                  </div>
                   <div className="form-group">
                     <label className="form-label">GSTIN</label>
                     <input
@@ -443,7 +483,7 @@ const UpdateForm = () => {
                 </div>
 
                 {/* Room Types */}
-                <div>
+                {/* <div>
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-md font-bold text-slate-800">Room Configurations</h3>
                     <button
@@ -486,8 +526,8 @@ const UpdateForm = () => {
                             <input
                               type="number"
                               placeholder="0"
-                              value={room.pricePerNight}
-                              onChange={(e) => handleRoomChange(index, "pricePerNight", e.target.value)}
+                              value={room.Price}
+                              onChange={(e) => handleRoomChange(index, "Price", e.target.value)}
                               className="w-full px-3 py-2 text-sm border border-slate-300 rounded-md focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
                             />
                           </div>
@@ -535,7 +575,7 @@ const UpdateForm = () => {
                       </div>
                     ))}
                   </div>
-                </div>
+                </div> */}
 
                 {/* Property Amenities */}
                 <div className="shadow px-5 mt-5 py-2 my-3">
@@ -605,7 +645,7 @@ const UpdateForm = () => {
                       ))}
                     </select>
                   </div>
-
+{/* 
                   <div className="form-group">
                     <label className="form-label">Total Capacity (Pax)</label>
                     <input
@@ -615,9 +655,9 @@ const UpdateForm = () => {
                       onChange={handleChange}
                       className="form-input"
                     />
-                  </div>
+                  </div> */}
 
-                  <div className="form-group">
+                  {/* <div className="form-group">
                     <label className="form-label">Price per Event (₹)</label>
                     <input
                       type="number"
@@ -626,7 +666,7 @@ const UpdateForm = () => {
                       onChange={handleChange}
                       className="form-input"
                     />
-                  </div>
+                  </div> */}
 
                   <div className="form-group">
                     <label className="form-label">Price per Plate (₹)</label>
@@ -639,7 +679,7 @@ const UpdateForm = () => {
                     />
                   </div>
 
-                  <div className="form-group">
+                  {/* <div className="form-group">
                     <label className="form-label">Parking Capacity</label>
                     <input
                       type="number"
@@ -648,7 +688,7 @@ const UpdateForm = () => {
                       onChange={handleChange}
                       className="form-input"
                     />
-                  </div>
+                  </div> */}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
